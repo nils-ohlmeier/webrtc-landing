@@ -39,6 +39,7 @@
       log("<b>Created offer:</b><br>" + offer.sdp.replace(/[\n]/g, '<br>'));
     } else {
       log("<b>Failed to determine external IP via STUN server:</b> " + config.iceServers[0].url);
+      log("<b>Offer:</b><br>" + offer.sdp.replace(/[\n]/g, '<br>'));
       if (onFailure) {
         onFailure();
       }
