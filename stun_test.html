@@ -15,17 +15,17 @@
     div.innerHTML = div.innerHTML + "<p>" + msg + "</p>";
   }
 
-  let pc1;
-
   function failed(code) {
     log("Failure callback: " + JSON.stringify(code));
   }
 
-  var configuration = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }]};
+  let pc1;
+  let configuration = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }]};
 
   pc1 = new mozRTCPeerConnection(configuration);
-  pc1.onicecandidate = function(c) {
-    log("ICE candidate: " + JSON.stringify(c));
+
+  pc1.onicecandidate = function(anEvent) {
+    log("ICE candidate event: " + JSON.stringify(anEvent));
   }
 
   navigator.mozGetUserMedia({video:true, fake:true},
@@ -33,7 +33,17 @@
       pc1.addStream(stream);
       setTimeout(function() {
         pc1.createOffer(function(offer) {
-          log("Created offer: " + offer.sdp.replace(/[\n]/g, '<br>'));
+          let srv = offer.sdp.match(/a=candidate.*typ srflx raddr.*/g);
+          if (srv) {
+            log("<b>Success:</b>");
+            for (let i=0; i < srv.length; i++) {
+              let ips = srv[i].match(/([0-9\.]+) ([0-9]+) typ srflx raddr ([0-9\.]+) rport ([0-9]+)/);
+              log("Local IP <b>" + ips[3] + "</b> with port <b>" + ips[4] + "</b> maps to external IP <b>" + ips[1] + "</b> with port <b>" + ips[2] + "</b>");
+            }
+          } else {
+            log("<b>Failed to determine external IP via STUN server:</b> " + configuration.iceServers[0].url);
+          }
+          log("<b>Created offer:</b><br>" + offer.sdp.replace(/[\n]/g, '<br>'));
         },
         failed
         );
