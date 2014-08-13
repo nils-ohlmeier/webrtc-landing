@@ -1,0 +1,89 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <title> mozRTCPeerConnection STUN Gathering Test</title>
+</head>
+<body>
+
+<h1> mozRTCPeerConnection STUN Gathering Test</h1>
+
+<div id="log"></div>
+
+
+<script type="application/javascript;version=1.8">
+  function log(msg) {
+    let div = document.getElementById("log");
+    div.innerHTML = div.innerHTML + "<p>" + msg + "</p>";
+  }
+
+  function failed(code) {
+    log("Failure callback: " + JSON.stringify(code));
+  }
+
+  function isRfc1918or3927 (p1, p2) {
+    return (p1 == 10) ||
+    (p1 == 172 && p2 >= 16 && p2 <= 31) ||
+    (p1 == 192 && p2 == 168) ||
+    (p1 == 169 && p2 == 254);
+  };
+
+  let pc1;
+  let pc2;
+  let dnsconfig = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }]};
+  // hopefully nothing besides old FxOS needs this
+  let ipconfig  = { "iceServers": [{ "url": "stun:173.194.78.127:19302" }]};
+
+  // onicecandidate would only work if we would call setLocalDescription
+  pc1 = new mozRTCPeerConnection(dnsconfig);
+  pc2 = new mozRTCPeerConnection(ipconfig);
+
+  function onoffer(offer, config, onFailure) {
+    let srflx = offer.sdp.match(/a=candidate.*typ srflx raddr.*/g);
+    if (srflx) {
+      log("<b>Success:</b>");
+      for (let i=0; i < srflx.length; i++) {
+        let ips = srflx[i].match(/([0-9\.]+) ([0-9]+) typ srflx raddr ([0-9\.]+) rport ([0-9]+)/);
+        log("Local IP <b>" + ips[3] + "</b> with port <b>" + ips[4] + "</b> maps to external IP <b>" + ips[1] + "</b> with port <b>" + ips[2] + "</b>");
+      }
+      log("<b>Created offer:</b><br>" + offer.sdp.replace(/[\n]/g, '<br>'));
+    } else {
+      let hosts = offer.sdp.match(/a=candidate.*typ host/g);
+      for (let i=0; i < hosts.length; i++) {
+        let ips = hosts[i].match(/([0-9\.]+) ([0-9]+) typ host/);
+        let [o1, o2, o3, o4] = ips[1].split('.');
+        if (!isRfc1918or3927(o1, o2)) {
+          log("<b>Unknown:</b>");
+          log("The ICE host candidates contain public IPs <b>" + ips[1] + "</b> therefore we can't determine if STUN works");
+          log("<b>Offer:</b><br>" + offer.sdp.replace(/[\n]/g, '<br>'));
+          return;
+        }
+      }
+      log("<b>Failed to determine public IP via STUN server:</b> " + config.iceServers[0].url);
+      log("<b>Offer:</b><br>" + offer.sdp.replace(/[\n]/g, '<br>'));
+      if (onFailure) {
+        onFailure();
+      }
+    }
+  }
+
+  navigator.mozGetUserMedia({video:true, fake:true},
+    function(stream) {
+      pc1.addStream(stream);
+      setTimeout(function() {
+        pc1.createOffer(function(offer) {
+          onoffer(offer, dnsconfig, function() {
+            pc2.addStream(stream);
+            setTimeout(function() {
+              pc2.createOffer(function(offer) {
+                onoffer(offer, ipconfig, null);
+              },
+              failed);
+            }, 5000);
+          });
+        },
+        failed);
+      }, 5000);
+    },
+    failed);
+
+</script>
+
