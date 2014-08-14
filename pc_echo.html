@@ -1,0 +1,263 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <title>Simple mozRTCPeerConnection Video Test</title>
+  <style>
+    #player1 {
+      position:relative;
+      width:640px;
+      height:480px;
+      float:right;
+    }
+    #player2 {
+      position:relative;
+      width:640px;
+      height:480px;
+      float:left;
+    }
+    #mainvideo {
+      position:absolute;
+      top:0;
+      left:0;
+      z-index:0;
+    }
+    #localvideo1 {
+      position:absolute;
+      top:0;
+      left:0;
+      z-index:1;
+    }
+    #canvas1 {
+      position:absolute;
+      bottom:0;
+      left:0;
+      z-index:2;
+    }
+
+    .hidden 
+    {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Simple mozRTCPeerConnection Video Test</h1>
+
+<div>
+<button id="tehbutton" onclick="start();">Start!</button>
+<input type="checkbox" id="audio_only" value="Audio-only call">
+<label for="audio_only">Audio-only call</label>
+<input type="checkbox" id="requireg722" value="Require G.722">
+<label for="requireg722">Require G.722 audio</label>
+<input type="checkbox" id="requireg711" value="Require G.711">
+<label for="requireg711">Require G.711 audio</label>
+</div><br>
+<div>
+<div id="player1">
+<video tabindex="0" id="localvideo1" controls="controls" height="120" width="160" muted></video>
+<canvas id="canvas1" width=512 height=256></canvas>
+</div>
+<div id="player2">
+<video tabindex="0" id="pc2video" class="mainvideo" controls="controls" height="480" width="640" muted></video>
+</div>
+<br style="clear: left;" />
+</div><br>
+<div id="log"></div>
+
+
+<script type="application/javascript;version=1.8">
+  // Lame clone function. Not efficient but we don't have jQuery.
+  function copy_dictionary (obj) {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
+  function log(msg) {
+    let div = document.getElementById("log");
+    div.innerHTML = div.innerHTML + "<p>" + msg + "</p>";
+  }
+
+  let pc2video = document.getElementById("pc2video");
+  let canv1 = document.getElementById("canvas1");
+  let context = new AudioContext();
+
+  let button = document.getElementById("tehbutton");
+  let localvideo1 = document.getElementById("localvideo1");
+  let audio_only = document.getElementById("audio_only");
+  audio_only.checked = false;
+  let requireg722 = document.getElementById("requireg722");
+  requireg722.checked = false;
+  let requireg711 = document.getElementById("requireg711");
+  requireg711.checked = false;
+
+  let pc1;
+  let pc2;
+
+  let pc1_offer;
+  let pc2_answer;
+
+  let offer_constraints;
+  let answer_constraints;
+
+  function failed(code) {
+    log("Failure callback: " + JSON.stringify(code));
+  }
+
+  // pc1.createOffer finished, call pc1.setLocal
+  function step1(offer) {
+    log("Offer:  " + sdpPrettyPrint(offer.sdp));
+    pc1_offer = offer;
+
+    if (requireg722.checked) {
+      // to enforce the usage of G.722 we remove other codecs from the offer
+      offer.sdp = removeNonG722(offer.sdp);
+      pc1_offer = offer;
+      log("G.722 only Offer: " + sdpPrettyPrint(offer.sdp));
+
+      if (!offer.sdp.match(/a=rtpmap:[0-9]+ G722/g)) {
+        log("No G722 found in the offer!!!");
+        return;
+      }
+    }
+    if (requireg711.checked) {
+      // to enforce the usage of G.711 we remove other codecs from the offer
+      offer.sdp = removeNonG711(offer.sdp);
+      pc1_offer = offer;
+      log("G.711 only Offer: " + sdpPrettyPrint(offer.sdp));
+
+      if (!offer.sdp.match(/a=rtpmap:[0-9]+ PCMU/g)) {
+        log("No G711 found in the offer!!!");
+        return;
+      }
+    }
+    pc1.setLocalDescription(offer, step2, failed);
+  }
+
+  // replace CR NL with HTML breaks
+  function sdpPrettyPrint(sdp) {
+    return sdp.replace(/[\r\n]+/g, '<br>');
+  }
+
+  // Remove anything that's not G.711 from the m=audio line
+  function removeNonG711(sdp) {
+    updated_sdp = sdp.replace(/m=audio ([0-9]+) RTP\/SAVPF ([0-9 ]*)/g, "m=audio $1 RTP\/SAVPF 0");
+    return updated_sdp;
+  }
+
+  // Remove anything that's not G.722 from the m=audio line
+  function removeNonG722(sdp) {
+    updated_sdp = sdp.replace(/m=audio ([0-9]+) RTP\/SAVPF ([0-9 ]*)/g, "m=audio $1 RTP\/SAVPF 9");
+    return updated_sdp;
+  }
+
+  // pc1.setLocal finished, call pc2.setRemote
+  function step2() {
+    pc2.setRemoteDescription(pc1_offer, step3, failed);
+  };
+
+  // pc2.setRemote finished, call pc2.createAnswer
+  function step3() {
+    pc2.createAnswer(step4, failed,  answer_constraints);
+  }
+
+  // pc2.createAnswer finished, call pc2.setLocal
+  function step4(answer) {
+    log("Answer:  " + sdpPrettyPrint(answer.sdp));
+    pc2_answer = answer;
+
+    if ((requireg722.checked) && (!answer.sdp.match(/a=rtpmap:[0-9]+ G722/g))) {
+      log("No G722 found in the answer!!!");
+      return;
+    }
+    if ((requireg711.checked) && (!answer.sdp.match(/a=rtpmap:[0-9]+ PCMU/g))) {
+      log("No G711 found in the answer!!!");
+      return;
+    }
+    pc2.setLocalDescription(answer, step5, failed);
+  }
+
+  // pc2.setLocal finished, call pc1.setRemote
+  function step5() {
+    pc1.setRemoteDescription(pc2_answer, step6, failed);
+  }
+
+  // pc1.setRemote finished, media should be running!
+  function step6() {
+    log("HIP HIP HOORAY");
+  }
+
+  function setupAudioAnalyzer(_stream, canv) {
+
+    console.log("setting up...");
+    var source = context.createMediaStreamSource(_stream);
+    var analyser = context.createAnalyser();
+    var delay = context.createDelay(3.0);
+    delay.delayTime.value = 1.0 // 300ms delay
+    source.connect(delay);
+    delay.connect(analyser);
+    analyser.connect(context.destination);
+
+    var buffer = new Uint8Array(analyser.frequencyBinCount);
+
+    var c = canv.getContext("2d");
+    c.fillStyle = "rgb(200,0,0)";
+
+    function update() {
+      analyser.getByteFrequencyData(buffer);
+      c.clearRect(0, 0, 512, 256);
+      for (var i=0; i < buffer.length; i++) {
+        c.fillRect(i, 256 - buffer[i], 1, buffer[i]);
+      }
+      requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
+
+  function start() {
+    button.innerHTML = "Stop!";
+    button.onclick = stop;
+
+    pc1 = new mozRTCPeerConnection();
+    pc2 = new mozRTCPeerConnection();
+
+    pc1.onaddstream = function(obj) {
+      log("pc1 got remote stream from pc2 " + obj.type);
+      // don't do anything here as we are looping the audio back
+    }
+    pc2.onaddstream = function(obj) {
+      log("pc2 got remote stream from pc1 " + obj.type);
+      pc2video.mozSrcObject = obj.stream;
+      pc2video.play();
+
+      setupAudioAnalyzer(obj.stream, canv1);
+    }
+
+    var myrequest = { audio: true };
+    if (!(audio_only.checked)) {
+      myrequest = { audio: true, video: true };
+    }
+
+    myrequest_reverse = copy_dictionary(myrequest);
+
+    navigator.mozGetUserMedia(myrequest, function(video1) {
+      // Add stream obtained from gUM to <video> to start media flow.
+      localvideo1.mozSrcObject = video1;
+      localvideo1.play();
+      pc1.addStream(video1);
+
+      var dest = context.createMediaStreamDestination();
+      pc2.addStream(dest.stream);
+      pc1.createOffer(step1, failed, offer_constraints );
+    }, failed);
+  }
+
+  function stop() {
+    pc1.close();
+    pc2.close();
+
+    button.innerHTML = "Start!";
+    button.onclick = start;
+  }
+</script>
+
+
+</body></html>
