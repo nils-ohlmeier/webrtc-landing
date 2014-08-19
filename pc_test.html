@@ -106,6 +106,9 @@
   let pc1;
   let pc2;
 
+  let localstream1;
+  let localstream2;
+
   let pc1_offer;
   let pc2_answer;
 
@@ -302,6 +305,7 @@
     }
 
     navigator.mozGetUserMedia(myrequest, function(video1) {
+      localstream1 = video1;
       // Add stream obtained from gUM to <video> to start media flow.
       localvideo1.mozSrcObject = video1;
       if (video_disable.checked)
@@ -313,6 +317,7 @@
 
       if (!oneway.checked) {
         navigator.mozGetUserMedia(myrequest_reverse, function(video2) {
+          localstream2 = video2;
           localvideo2.mozSrcObject = video2;
           localvideo2.play();
           pc2.addStream(video2);
@@ -327,7 +332,13 @@
 
   function stop() {
     pc1.close();
+    localstream1.stop();
     pc2.close();
+    try {
+      localstream2.stop();
+    }
+    catch (err) {
+    }
 
     button.innerHTML = "Start!";
     button.onclick = start;
