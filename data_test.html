@@ -53,7 +53,11 @@
   let stream_num = document.getElementById("stream_num");
 
   let pc1;
+  let pc1_ice_candidates = [];
+  let pc1_set_remote = false;
   let pc2;
+  let pc2_ice_candidates = [];
+  let pc2_set_remote = false;
   let dc1;
   let dc2;
   let channel1;
@@ -100,10 +104,10 @@
     iter = iter + 1;
     //log("Sending message #" + iter + " this = " + this);
     if (which == 1) {
-      dc1.send(text_pc1.value);
+      channel1.send(text_pc1.value);
       text_pc1.value = "";
     } else if (which == 2) {
-      dc2.send(text_pc2.value);
+      channel2.send(text_pc2.value);
       text_pc2.value = "";
     } else {
       log("Unknown send " + which);
@@ -114,10 +118,10 @@
     iter = iter + 1;
     //log("Sending blob #" + iter + " this = " + this);
     if (which == 1) {
-      dc1.send(blob_pc1.files[0]);
+      channel1.send(blob_pc1.files[0]);
       blob_pc1.value = "";
     } else if (which == 2) {
-      dc2.send(blob_pc2.files[0]);
+      channel2.send(blob_pc2.files[0]);
       blob_pc2.value = "";
     } else {
       log("Unknown sendblob " + which);
@@ -132,6 +136,25 @@
   function step1(offer) {
     pc1_offer = offer;
     log("Offer: " + offer.sdp);
+
+    pc1.onicecandidate = function(obj) {
+      if (obj.candidate) {
+        log("pc1 found ICE candidate: " + JSON.stringify(obj.candidate));
+        if (pc2_set_remote) {
+          pc2.addIceCandidate(obj.candidate, function () {
+              log("pc2 successfully added ICE candidate: " + JSON.stringify(obj.candidate));
+            }, function() {
+              log("pc2 failed to add ICE candidate: " + JSON.stringify(obj.candidate));
+            });
+        } else {
+          log("pc1 storing ICE candidate for pc2");
+          pc1_ice_candidates.push(obj);
+        }
+      } else {
+        log("pc1 got end-of-candidates signal");
+      }
+    }
+
     pc1.setLocalDescription(offer, step1_5, failed);
   }
 
@@ -141,10 +164,9 @@
 
   // pc1.setLocal finished, call pc2.setRemote
   function step2() {
-    pc2 = new mozRTCPeerConnection();
-
     pc2.ondatachannel = function(event) {
       channel = event.channel;
+      channel2 = channel;
       log("pc2 onDataChannel [" +num_channels + "] = " + channel +
           ", stream=" + channel.stream + " id=" + channel.id +
           ", ordered=" + channel.ordered +
@@ -181,20 +203,24 @@
       log("pc2 got remote stream from pc1 " + obj.type);
     }
 
-    pc1.onicecandidate = function(obj) {
-      if (obj.candidate) {
-        log("pc1 found ICE candidate: " + JSON.stringify(obj.candidate));
-        pc2.addIceCandidate(obj.candidate);
-      } else {
-        log("pc1 got end-of-candidates signal");
-      }
-    }
-
+    log("pc2 calling setRemoteDescription");
     pc2.setRemoteDescription(pc1_offer, step3, failed);
   };
 
   // pc2.setRemote finished, call pc2.createAnswer
   function step3() {
+    pc2_set_remote = true;
+    if (pc1_ice_candidates.length > 0) {
+      for (var i=0; i < pc1_ice_candidates.length; i++) {
+          var cand = pc1_ice_candidates[i].candidate;
+          pc2.addIceCandidate(cand, function () {
+              log("pc2 successfully added stored ICE candidate: " + JSON.stringify(cand));
+            }, function() {
+              log("pc2 failed to add stored ICE candidate: " + JSON.stringify(cand));
+            });
+      }
+      pc1_ice_candidates = [];
+    }
     pc2.createAnswer(step4, failed);
   }
 
@@ -202,26 +228,49 @@
   function step4(answer) {
     pc2_answer = answer;
     log("Answer: " + answer.sdp);
-    pc2.setLocalDescription(answer, step5, failed);
-  }
 
-  // pc2.setLocal finished, call pc1.setRemote
-  function step5() {
     pc2.onicecandidate = function(obj) {
       if (obj.candidate) {
         log("pc2 found ICE candidate: " + JSON.stringify(obj.candidate));
-        pc1.addIceCandidate(obj.candidate);
+        if (pc1_set_remote) {
+          pc1.addIceCandidate(obj.candidate, function () {
+              log("pc1 successfully added ICE candidate: " + JSON.stringify(obj.candidate));
+            }, function() {
+              log("pc1 failed to add ICE candidate: " + JSON.stringify(obj.candidate));
+            });
+        } else {
+          log("pc2 storing ICE candidate for pc2");
+          pc2_ice_candidates.push(obj);
+        }
       } else {
         log("pc2 got end-of-candidates signal");
       }
     }
 
+    pc2.setLocalDescription(answer, step5, failed);
+  }
+
+  // pc2.setLocal finished, call pc1.setRemote
+  function step5() {
+    log("pc1 calling setRemoteDescription");
     pc1.setRemoteDescription(pc2_answer, step6, failed);
   }
 
   // pc1.setRemote finished, make a data channel
   function step6() {
     log("HIP HIP HOORAY");
+    pc1_set_remote = true;
+    if (pc2_ice_candidates.length > 0) {
+      for (var i=0; i < pc2_ice_candidates.length; i++) {
+          var cand = pc2_ice_candidates[i].candidate;
+          pc1.addIceCandidate(cand, function () {
+              log("pc1 successfully added stored ICE candidate: " + JSON.stringify(cand));
+            }, function() {
+              log("pc1 failed to add stored ICE candidate: " + JSON.stringify(cand));
+            });
+      }
+      pc2_ice_candidates = [];
+    }
   }
 
 function start() {
@@ -232,6 +281,7 @@ function start() {
     }
 
     pc1 = new mozRTCPeerConnection();
+    pc2 = new mozRTCPeerConnection();
 
     pc1.onaddstream = function(obj) {
       log("pc1 got remote stream from pc2 " + obj.type);
@@ -259,6 +309,7 @@ function start() {
       channel.onopen = function() {
         log("pc1 onopen fired for " + channel);
         channel.send("pc1 says Hello out there...");
+        channel1 = channel;
         log("pc1 state: " + channel.state);
       }
       channel.onclose = function() {
@@ -313,7 +364,8 @@ function start() {
     }
     channel.onopen = function() {
       log("pc1 onopen fired for " + channel);
-       channel.send("pc1 says Hello...");
+      channel.send("pc1 says Hello...");
+      channel1 = channel;
     }
     channel.onclose = function() {
       log("pc1 onclose fired");
