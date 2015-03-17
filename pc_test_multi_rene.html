@@ -172,6 +172,7 @@
 
   function stopScreenShare() {
     screenSenders.forEach(track => {
+      log("Track.type: "+ track.type);
       pc1.removeTrack(track);
     });
 
