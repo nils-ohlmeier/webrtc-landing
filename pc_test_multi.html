@@ -198,6 +198,7 @@
     pc2.onaddstream = function(obj) {
       log("pc2 got remote stream from pc1 " + obj.type);
       var stream = obj.stream;
+      log("pc2 stream has " + stream.getAudioTracks().length + " audio tracks and " + stream.getVideoTracks().length + " video tracks");
       if (stream.getAudioTracks().length == 0) {
         pc3video.mozSrcObject = obj.stream;
       } else {
