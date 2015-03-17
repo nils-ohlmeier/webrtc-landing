@@ -94,7 +94,7 @@
   let offer_constraints;
   let answer_constraints;
 
-  let screenSenders;
+  let screenTracks;
 
   function failed(err, constraints) {
     log("Failure callback: " + JSON.stringify(err));
@@ -171,19 +171,21 @@
   }
 
   function stopScreenShare() {
+    var found = false;
     pc1.getSenders().forEach(sender => {
-      log("looking at sender..");
-      screenSenders.forEach(track => {
-        log("comparing with track");
+      screenTracks.forEach(track => {
         if (sender.track == track) {
-          log("Removing track " + JSON.stringify(track));
           pc1.removeTrack(sender);
+          found = true;
         }
       });
     });
 
-    screenbutton.innerHTML = "Share Screen";
-    screenbutton.onclick = screenShare;
+    if (found) {
+      screenbutton.innerHTML = "Share Screen";
+      screenbutton.onclick = screenShare;
+      screenTracks = [];
+    }
   }
 
   function screenShare() {
@@ -196,8 +198,8 @@
 
     navigator.mozGetUserMedia(screenConstraints, function(stream) {
       log("Got a screen share stream");
-      screenSenders = stream.getTracks()
-      screenSenders.forEach(track => {
+      screenTracks = stream.getTracks()
+      screenTracks.forEach(track => {
         pc1.addTrack(track, stream);
       });
     }, function (err) {failed(err, screenConstraints);});
