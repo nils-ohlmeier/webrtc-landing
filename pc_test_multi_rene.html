@@ -4,8 +4,8 @@
   <style>
     #player1 {
       position:relative;
-      width:640px;
-      height:480px;
+      width:320px;
+      height:240px;
       float:right;
     }
     #player2 {
@@ -18,6 +18,12 @@
       position:absolute;
       top:0;
       left:0;
+      z-index:0;
+    }
+    #screenvideo {
+      position:absolute;
+      top:0;
+      right:0;
       z-index:0;
     }
     #localvideo1, #localvideo2 {
@@ -42,11 +48,11 @@
 <br>
 <div>
 <div id="player1">
-<video tabindex="0" id="pc1video" class="mainvideo" controls="controls" height="480" width="640" muted autoplay></video>
+<video tabindex="0" id="pc1video" class="mainvideo" controls="controls" height="240" width="320" muted autoplay></video>
 <video tabindex="0" id="localvideo1" controls="controls" height="120" width="160" muted></video></div>
 <div id="player2">
-<video tabindex="0" id="pc2video" class="mainvideo" controls="controls" height="480" width="640" muted autoplay></video>
-<video tabindex="0" id="pc3video" class="mainvideo" controls="controls" height="480" width="640" muted autoplay></video>
+<video tabindex="0" id="pc2video" class="mainvideo" controls="controls" height="240" width="320" muted autoplay></video>
+<video tabindex="0" id="screenvideo" controls="controls" height="240" width="320" muted autoplay></video>
 <video tabindex="0" id="localvideo2" controls="controls" height="120" width="160" muted></video></div><br>
 <br style="clear: left;" />
 </div>
@@ -61,7 +67,7 @@
 
   let pc1video = document.getElementById("pc1video");
   let pc2video = document.getElementById("pc2video");
-  let pc3video = document.getElementById("pc3video");
+  let pc3video = document.getElementById("screenvideo");
   pc1video.onplay = function() {log("Play for pc1");};
   pc2video.onplay = function() {log("Play for pc2");};
   pc3video.onplay = function() {log("Play for pc3");};
