@@ -183,10 +183,10 @@
       var lStreams = pc1.getLocalStreams();
       if (lStreams.length > 0) {
         log("We have at least one local stream");
-        screenSenders = stream.getTracks()
+        screenSenders = stream.getVideoTracks()
         log("screenSenders: " + JSON.stringify(screenSenders));
         screenSenders.forEach(track => {
-          log("Adding track...");
+          log("Adding track... " + JSON.stringify(track));
           pc1.addTrack(track, lStreams[0]);
         });
       }
