@@ -20,7 +20,7 @@
       left:0;
       z-index:0;
     }
-    #screenvideo {
+    #player2screen {
       position:absolute;
       top:0;
       right:0;
@@ -45,18 +45,24 @@
 
 <div>
 <button id="callbutton" onclick="start();">Start Call</button>
-<div id="divscreen" class="hidden">
-  <button id="screenbutton" onclick="screenShare();">Share Screen</button>
-</div>
 <br>
 <div>
 <div id="player1">
 <video tabindex="0" id="pc1video" class="mainvideo" controls="controls" height="240" width="320" muted autoplay></video>
-<video tabindex="0" id="localvideo1" controls="controls" height="120" width="160" muted></video></div>
+<video tabindex="0" id="localvideo1" controls="controls" height="120" width="160" muted></video>
+</div>
 <div id="player2">
+<div id="player2video">
 <video tabindex="0" id="pc2video" class="mainvideo" controls="controls" height="240" width="320" muted autoplay></video>
+<video tabindex="0" id="localvideo2" controls="controls" height="120" width="160" muted></video>
+</div>
+<div id="player2screen">
+<div id="divscreen" class="hidden">
+  <button id="screenbutton" onclick="screenShare();">Share Screen</button>
+</div>
 <video tabindex="0" id="screenvideo" class="hidden" controls="controls" height="240" width="320" muted autoplay></video>
-<video tabindex="0" id="localvideo2" controls="controls" height="120" width="160" muted></video></div><br>
+</div>
+</div><br>
 <br style="clear: left;" />
 </div>
 <div id="log"></div>
