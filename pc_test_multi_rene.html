@@ -171,10 +171,15 @@
   }
 
   function stopScreenShare() {
-    screenSenders.forEach(track => {
-      log("Removing track " + JSON.stringify(track));
-      log("Track.type: "+ track.type);
-      pc1.removeTrack(track);
+    p1.getSenders().forEach(sender => {
+      log("looking at sender..");
+      screenSenders.forEach(track => {
+        log("comparing with track");
+        if (sender.track == track) {
+          log("Removing track " + JSON.stringify(track));
+          pc1.removeTrack(sender);
+        }
+      });
     });
 
     screenbutton.innerHTML = "Share Screen";
