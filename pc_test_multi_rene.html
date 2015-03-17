@@ -65,7 +65,7 @@
 <script type="application/javascript;version=1.8">
   function log(msg) {
     let div = document.getElementById("log");
-    div.innerHTML = div.innerHTML + "<p>" + msg + "</p>";
+    div.innerHTML = "<p>" + msg + "</p>" + div.innerHTML;
   }
 
   function clearlog() {
@@ -97,7 +97,8 @@
   let screenTracks;
 
   function failed(err, constraints) {
-    log("Failure callback: " + JSON.stringify(err));
+    log("Error name: " + err.name);
+    log("Error message: " + err.message);
     log("Constraints: " + JSON.stringify(constraints));
   }
 
