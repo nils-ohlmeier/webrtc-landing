@@ -41,10 +41,13 @@
 </head>
 <body>
 
-<h1>Simple mozRTCPeerConnection Video Test</h1>
+<h1>Multistream & Renegotiation Test</h1>
 
 <div>
-<button id="tehbutton" onclick="start();">Start!</button>
+<button id="callbutton" onclick="start();">Start Call</button>
+<div id="divscreen" class="hidden">
+  <button id="screenbutton" onclick="screenshare();">Share Screen</button>
+</div>
 <br>
 <div>
 <div id="player1">
@@ -72,9 +75,11 @@
   pc2video.onplay = function() {log("Play for pc2");};
   pc3video.onplay = function() {log("Play for pc3");};
 
-  let button = document.getElementById("tehbutton");
   let localvideo1 = document.getElementById("localvideo1");
   let localvideo2 = document.getElementById("localvideo2");
+
+  let callbutton = document.getElementById("callbutton");
+  let screenbutton = document.getElementById("screenbutton");
 
   let pc1;
   let pc2;
@@ -155,11 +160,13 @@
       pc1.addIceCandidate(pc1.ice_queued.shift());
     }
     log("HIP HIP HOORAY");
+
+    document.getElementById('divscreen').style.display = 'block';
   }
 
   function start() {
-    button.innerHTML = "Stop!";
-    button.onclick = stop;
+    callbutton.innerHTML = "Stop Call";
+    callbutton.onclick = stop;
 
     pc1 = new mozRTCPeerConnection();
     pc2 = new mozRTCPeerConnection();
@@ -236,8 +243,10 @@
     pc1.close();
     pc2.close();
 
-    button.innerHTML = "Start!";
-    button.onclick = start;
+    callbutton.innerHTML = "Start Call";
+    callbutton.onclick = start;
+
+    document.getElementById('divscreen').style.display = 'none';
   }
 </script>
 
