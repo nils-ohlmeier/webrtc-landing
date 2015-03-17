@@ -81,8 +81,9 @@
   let offer_constraints;
   let answer_constraints;
 
-  function failed(code) {
-    log("Failure callback: " + JSON.stringify(code));
+  function failed(err, constraints) {
+    log("Failure callback: " + JSON.stringify(err));
+    log("Constraints: " + JSON.stringify(constraints));
   }
 
   // pc1.createOffer finished, call pc1.setLocal
@@ -198,24 +199,28 @@
       pc2video.mozSrcObject = obj.stream;
     }
 
-    let offerGumConstraints = { video: {mozMediaSource: "screen", mediaSource: "screen"}};
+    let videoConstraints  = {video: true};
+    let screenConstraints = {video: {mozMediaSource: "screen", mediaSource: "screen"}};
+    let fakeVideoConstraints = {video: true, fake: true };
 
-    let answerGumConstraints = { video: true, fake: true };
-
-    navigator.mozGetUserMedia(offerGumConstraints, function(video1) {
+    navigator.mozGetUserMedia(videoConstraints, function(video1) {
       // Add stream obtained from gUM to <video> to start media flow.
       localvideo1.mozSrcObject = video1;
       localvideo1.play();
       pc1.addStream(video1);
 
-      navigator.mozGetUserMedia(answerGumConstraints, function(video2) {
-        localvideo2.mozSrcObject = video2;
-        localvideo2.play();
-        pc2.addStream(video2);
-        // Start the signaling.
-        pc1.createOffer(step1, failed, offer_constraints );
-      }, failed);
-    }, failed);
+      navigator.mozGetUserMedia(screenConstraints, function(video2) {
+        pc1.addStream(video2);
+
+        navigator.mozGetUserMedia(fakeVideoConstraints, function(video3) {
+          localvideo2.mozSrcObject = video3;
+          localvideo2.play();
+          pc2.addStream(video3);
+          // Start the signaling.
+          pc1.createOffer(step1, failed, offer_constraints );
+        }, function (err) {failed(err, fakeVideoConstraints);});
+      }, function (err) {failed(err, screenConstraints);});
+    }, function (err) {failed(err, videoConstraints);});
   }
 
   function stop() {
