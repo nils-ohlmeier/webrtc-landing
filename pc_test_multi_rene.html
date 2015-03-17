@@ -55,7 +55,7 @@
 <video tabindex="0" id="localvideo1" controls="controls" height="120" width="160" muted></video></div>
 <div id="player2">
 <video tabindex="0" id="pc2video" class="mainvideo" controls="controls" height="240" width="320" muted autoplay></video>
-<video tabindex="0" id="screenvideo" controls="controls" height="240" width="320" muted autoplay></video>
+<video tabindex="0" id="screenvideo" class="hidden" controls="controls" height="240" width="320" muted autoplay></video>
 <video tabindex="0" id="localvideo2" controls="controls" height="120" width="160" muted></video></div><br>
 <br style="clear: left;" />
 </div>
@@ -172,21 +172,17 @@
   }
 
   function stopScreenShare() {
-    var found = false;
     pc1.getSenders().forEach(sender => {
       screenTracks.forEach(track => {
         if (sender.track == track) {
           pc1.removeTrack(sender);
-          found = true;
         }
       });
     });
 
-    if (found) {
-      screenbutton.innerHTML = "Share Screen";
-      screenbutton.onclick = screenShare;
-      screenTracks = [];
-    }
+    screenbutton.innerHTML = "Share Screen";
+    screenbutton.onclick = screenShare;
+    pc3video.style.display = 'none';
   }
 
   function screenShare() {
@@ -205,6 +201,7 @@
       });
     }, function (err) {failed(err, screenConstraints);});
 
+    pc3video.style.display = 'block';
     screenbutton.innerHTML = "Stop Screen Share";
     screenbutton.onclick = stopScreenShare;
   }
