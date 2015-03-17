@@ -46,7 +46,7 @@
 <div>
 <button id="callbutton" onclick="start();">Start Call</button>
 <div id="divscreen" class="hidden">
-  <button id="screenbutton" onclick="screenshare();">Share Screen</button>
+  <button id="screenbutton" onclick="screenShare();">Share Screen</button>
 </div>
 <br>
 <div>
@@ -170,7 +170,16 @@
     document.getElementById('divscreen').style.display = 'block';
   }
 
-  function screenshare() {
+  function stopScreenShare() {
+    screenSenders.forEach(track => {
+      pc1.removeTrack(track);
+    });
+
+    screenbutton.innerHTML = "Share Screen";
+    screenbutton.onclick = screenShare;
+  }
+
+  function screenShare() {
     let screenConstraints = {video: {mozMediaSource: "screen", mediaSource: "screen"}};
 
     pc1.onnegotiationneeded = function (event) {
@@ -185,6 +194,9 @@
         pc1.addTrack(track, stream);
       });
     }, function (err) {failed(err, screenConstraints);});
+
+    screenbutton.innerHTML = "Stop Screen Share";
+    screenbutton.onclick = stopScreenShare;
   }
 
   function start() {
