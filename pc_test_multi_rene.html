@@ -186,6 +186,7 @@
         screenSenders = stream.getTracks()
         log("screenSenders: " + JSON.stringify(screenSenders));
         screenSenders.forEach(track => {
+          log("Adding track...");
           pc1.addTrack(track, lStreams[0]);
         });
       }
