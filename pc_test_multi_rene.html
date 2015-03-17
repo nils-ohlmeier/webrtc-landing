@@ -68,6 +68,10 @@
     div.innerHTML = div.innerHTML + "<p>" + msg + "</p>";
   }
 
+  function clearlog() {
+    document.getElementById("log").innerHTML = "<p></p>";
+  }
+
   let pc1video = document.getElementById("pc1video");
   let pc2video = document.getElementById("pc2video");
   let pc3video = document.getElementById("screenvideo");
@@ -167,6 +171,11 @@
   function screenshare() {
     let screenConstraints = {video: {mozMediaSource: "screen", mediaSource: "screen"}};
 
+    pc1.onnegotiationneeded = function (event) {
+      log("pc1 onnegotiationneeded fired");
+      pc1.createOffer(step1, failed, offer_constraints );
+    };
+
     navigator.mozGetUserMedia(screenConstraints, function(video) {
       pc1.addStream(video);
     }, function (err) {failed(err, screenConstraints);});
@@ -175,6 +184,7 @@
   function start() {
     callbutton.innerHTML = "Stop Call";
     callbutton.onclick = stop;
+    clearlog();
 
     pc1 = new mozRTCPeerConnection();
     pc2 = new mozRTCPeerConnection();
