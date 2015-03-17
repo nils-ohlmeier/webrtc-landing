@@ -195,15 +195,16 @@
 
     navigator.mozGetUserMedia(screenConstraints, function(stream) {
       log("Got a screen share stream");
+
+      pc3video.style.display = 'block';
+      screenbutton.innerHTML = "Stop Screen Share";
+      screenbutton.onclick = stopScreenShare;
+
       screenTracks = stream.getTracks()
       screenTracks.forEach(track => {
         pc1.addTrack(track, stream);
       });
     }, function (err) {failed(err, screenConstraints);});
-
-    pc3video.style.display = 'block';
-    screenbutton.innerHTML = "Stop Screen Share";
-    screenbutton.onclick = stopScreenShare;
   }
 
   function start() {
