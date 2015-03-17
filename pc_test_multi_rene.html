@@ -94,6 +94,8 @@
   let offer_constraints;
   let answer_constraints;
 
+  let screenSender;
+
   function failed(err, constraints) {
     log("Failure callback: " + JSON.stringify(err));
     log("Constraints: " + JSON.stringify(constraints));
@@ -180,7 +182,7 @@
       var lStreams = pc1.getLocalStreams();
       if (lStreams.length > 0) {
         stream.getTracks().forEach(track => {
-          pc1.addTrack(track, lStreams[0]);
+          pc1.addTrack(track, stream);
         });
       }
       pc1.addStream(video);
