@@ -189,7 +189,7 @@
         log("screenSenders: " + JSON.stringify(screenSenders));
         screenSenders.forEach(track => {
           log("Adding track... " + JSON.stringify(track));
-          pc1.addTrack(track, firstStream);
+          pc1.addTrack(track, stream);
         });
       }
       //pc1.addStream(video);
