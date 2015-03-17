@@ -179,8 +179,10 @@
     };
 
     navigator.mozGetUserMedia(screenConstraints, function(stream) {
+      log("Got a screen share stream");
       var lStreams = pc1.getLocalStreams();
       if (lStreams.length > 0) {
+        log("We have at least one local stream");
         stream.getTracks().forEach(track => {
           pc1.addTrack(track, lStreams[0]);
         });
