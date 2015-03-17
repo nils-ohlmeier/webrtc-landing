@@ -164,6 +164,14 @@
     document.getElementById('divscreen').style.display = 'block';
   }
 
+  function screenshare() {
+    let screenConstraints = {video: {mozMediaSource: "screen", mediaSource: "screen"}};
+
+    navigator.mozGetUserMedia(screenConstraints, function(video) {
+      pc1.addStream(video);
+    }, function (err) {failed(err, screenConstraints);});
+  }
+
   function start() {
     callbutton.innerHTML = "Stop Call";
     callbutton.onclick = stop;
@@ -217,7 +225,6 @@
     }
 
     let videoConstraints  = {audio: true, video: true};
-    let screenConstraints = {video: {mozMediaSource: "screen", mediaSource: "screen"}};
     let fakeVideoConstraints = {video: true, fake: true };
 
     navigator.mozGetUserMedia(videoConstraints, function(video1) {
@@ -225,17 +232,13 @@
       localvideo1.play();
       pc1.addStream(video1);
 
-      navigator.mozGetUserMedia(screenConstraints, function(video2) {
-        pc1.addStream(video2);
-
-        navigator.mozGetUserMedia(fakeVideoConstraints, function(video3) {
-          localvideo2.mozSrcObject = video3;
-          localvideo2.play();
-          pc2.addStream(video3);
-          // Start the signaling.
-          pc1.createOffer(step1, failed, offer_constraints );
-        }, function (err) {failed(err, fakeVideoConstraints);});
-      }, function (err) {failed(err, screenConstraints);});
+      navigator.mozGetUserMedia(fakeVideoConstraints, function(video2) {
+        localvideo2.mozSrcObject = video2;
+        localvideo2.play();
+        pc2.addStream(video2);
+        // Start the signaling.
+        pc1.createOffer(step1, failed, offer_constraints );
+      }, function (err) {failed(err, fakeVideoConstraints);});
     }, function (err) {failed(err, videoConstraints);});
   }
 
