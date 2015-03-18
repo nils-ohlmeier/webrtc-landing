@@ -222,16 +222,15 @@
     pc1.ice_queued = [];
     pc2.ice_queued = [];
 
-    pc2.onicecandidate = function(obj) {
-      if (obj.candidate) {
-        log("pc2 found ICE candidate: " + JSON.stringify(obj.candidate));
-        if (pc1.didSetRemote) {
-          pc1.addIceCandidate(obj.candidate);
-        } else {
-          pc1.ice_queued.push(obj.candidate);
-        }
-      } else {
-        log("pc2 got end-of-candidates signal");
+    pc1.oniceconnectionstatechange = function() {
+      if (pc1.iceConnectionState == "connected") {
+        log("HIP HIP HORRAY PC1 is connected");
+      }
+    }
+
+    pc2.oniceconnectionstatechange = function() {
+      if (pc2.iceConnectionState == "connected") {
+        log("HIP HIP HORRAY PC2 is connected");
       }
     }
 
@@ -248,10 +247,24 @@
       }
     }
 
+    pc2.onicecandidate = function(obj) {
+      if (obj.candidate) {
+        log("pc2 found ICE candidate: " + JSON.stringify(obj.candidate));
+        if (pc1.didSetRemote) {
+          pc1.addIceCandidate(obj.candidate);
+        } else {
+          pc1.ice_queued.push(obj.candidate);
+        }
+      } else {
+        log("pc2 got end-of-candidates signal");
+      }
+    }
+
     pc1.onaddstream = function(obj) {
       log("pc1 got remote stream from pc2 " + obj.type);
       pc1video.mozSrcObject = obj.stream;
     }
+
     pc2.onaddstream = function(obj) {
       log("pc2 got remote stream from pc1 " + obj.type);
       var stream = obj.stream;
