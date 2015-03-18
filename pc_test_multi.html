@@ -115,7 +115,7 @@
     log("Offer:  " + sdpPrettyPrint(offer.sdp));
     pc1_offer = offer;
 
-    pc1.setLocalDescription(offer, step2, failed);
+    pc1.setLocalDescription(offer).then(step2, failed);
   }
 
   // pc1.setLocal finished, call pc2.setRemote
@@ -129,7 +129,7 @@
       }
     }
 
-    pc2.setRemoteDescription(pc1_offer, step3, failed);
+    pc2.setRemoteDescription(pc1_offer).then(step3, failed);
   };
 
   // pc2.setRemote finished, call pc2.createAnswer
@@ -138,7 +138,7 @@
     while (pc2.ice_queued.length > 0) {
       pc2.addIceCandidate(pc2.ice_queued.shift());
     }
-    pc2.createAnswer(step4, failed);
+    pc2.createAnswer().then(step4, failed);
   }
 
   // pc2.createAnswer finished, call pc2.setLocal
@@ -146,7 +146,7 @@
     log("Answer:  " + sdpPrettyPrint(answer.sdp));
     pc2_answer = answer;
 
-    pc2.setLocalDescription(answer, step5, failed);
+    pc2.setLocalDescription(answer).then(step5, failed);
   }
 
   // pc2.setLocal finished, call pc1.setRemote
@@ -160,10 +160,10 @@
       }
     }
 
-    pc1.setRemoteDescription(pc2_answer, step6, failed);
+    pc1.setRemoteDescription(pc2_answer).then(step6, failed);
   }
 
-  // pc1.setRemote finished, media should be running!
+  // pc1.setRemote finished
   function step6() {
     pc1.didSetRemote = true;
     while (pc1.ice_queued.length > 0) {
@@ -290,7 +290,7 @@
             localvideo2.play();
             pc2.addStream(video2);
             // Start the signaling.
-            pc1.createOffer(step1, failed);
+            pc1.createOffer().then(step1, failed);
           });
       });
   }
