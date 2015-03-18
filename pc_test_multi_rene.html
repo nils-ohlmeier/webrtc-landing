@@ -276,7 +276,7 @@
         localvideo2.play();
         pc2.addStream(video2);
         // Start the signaling.
-        pc1.createOffer(step1, failed, offer_constraints );
+        pc1.createOffer(step1, failed);
       }, function (err) {failed(err, fakeVideoConstraints);});
     }, function (err) {failed(err, videoConstraints);});
   }
