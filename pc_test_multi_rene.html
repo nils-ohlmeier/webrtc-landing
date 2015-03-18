@@ -97,9 +97,6 @@
   let pc1_offer;
   let pc2_answer;
 
-  let offer_constraints;
-  let answer_constraints;
-
   let screenTracks;
 
   function failed(err, constraints) {
@@ -141,7 +138,7 @@
     while (pc2.ice_queued.length > 0) {
       pc2.addIceCandidate(pc2.ice_queued.shift());
     }
-    pc2.createAnswer(step4, failed,  answer_constraints);
+    pc2.createAnswer(step4, failed);
   }
 
   // pc2.createAnswer finished, call pc2.setLocal
@@ -196,7 +193,7 @@
 
     pc1.onnegotiationneeded = function (event) {
       log("pc1 onnegotiationneeded fired");
-      pc1.createOffer(step1, failed, offer_constraints );
+      pc1.createOffer(step1, failed);
     };
 
     navigator.mozGetUserMedia(screenConstraints, function(stream) {
