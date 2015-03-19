@@ -186,7 +186,7 @@
   }
 
   function screenShare() {
-    let screenConstraints = {video: {mozMediaSource: "screen", mediaSource: "screen"}};
+    let screenConstraints = {video: {mediaSource: "screen"}};
 
     pc1.onnegotiationneeded = function (event) {
       log("pc1 onnegotiationneeded fired");
