@@ -108,7 +108,7 @@
   let pc1_offer;
   let pc2_answer;
 
-  let screenTracks;
+  let screenSenders = [];
 
   // pc1.createOffer finished, call pc1.setLocal
   function step1(offer) {
@@ -175,13 +175,10 @@
   }
 
   function stopScreenShare() {
-    pc1.getSenders().forEach(sender => {
-      screenTracks.forEach(track => {
-        if (sender.track == track) {
-          pc1.removeTrack(sender);
-        }
-      });
+    screenSenders.forEach(sender => {
+      pc1.removeTrack(sender);
     });
+    screenSenders = [];
 
     screenbutton.innerHTML = "Share Screen";
     screenbutton.onclick = screenShare;
@@ -203,9 +200,8 @@
       screenbutton.innerHTML = "Stop Screen Share";
       screenbutton.onclick = stopScreenShare;
 
-      screenTracks = stream.getTracks()
-      screenTracks.forEach(track => {
-        pc1.addTrack(track, stream);
+      stream.getTracks().forEach(track => {
+        screenSenders.push(pc1.addTrack(track, stream));
       });
     }, function (err) {failed(err, screenConstraints);});
   }
