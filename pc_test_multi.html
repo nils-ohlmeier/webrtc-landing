@@ -71,7 +71,8 @@
 <script type="application/javascript;version=1.8">
   function log(msg) {
     let div = document.getElementById("log");
-    div.innerHTML = div.innerHTML + "<p>" + msg + "</p>";
+    //div.innerHTML = div.innerHTML + "<p>" + msg + "</p>";
+    div.innerHTML =  "<p>" + msg + "</p>" + div.innerHTML;
   }
 
   function clearlog() {
