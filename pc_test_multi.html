@@ -198,12 +198,13 @@
   }
 
   function stopScreenShare() {
+    screenStream.stop();
     screenSenders.forEach(sender => {
       pc1.removeTrack(sender);
     });
     screenSenders = [];
     //pc3video.pause();
-    pc3video.mozSrcObject.stop();
+    //pc3video.mozSrcObject.stop();
 
     hideScreenVideo();
   }
@@ -219,6 +220,7 @@
     navigator.mediaDevices.getUserMedia(screenConstraints)
       .then(stream => {
         log("Got a screen share stream");
+        screenStream = stream;
 
         showScreenVideo();
 
