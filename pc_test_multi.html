@@ -109,6 +109,7 @@
   let pc1_offer;
   let pc2_answer;
 
+  let screenStream;
   let screenSenders = [];
 
   // pc1.createOffer finished, call pc1.setLocal
@@ -201,6 +202,8 @@
       pc1.removeTrack(sender);
     });
     screenSenders = [];
+    screenStream.pause();
+    screenStream = undefined;
 
     hideScreenVideo();
   }
@@ -216,6 +219,7 @@
     navigator.mediaDevices.getUserMedia(screenConstraints)
       .then(stream => {
         log("Got a screen share stream");
+        screenStream = stream;
 
         showScreenVideo();
 
