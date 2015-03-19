@@ -277,13 +277,13 @@
 
     navigator.mediaDevices.getUserMedia(videoConstraints)
       .then(stream1 => {
-        localvideo1.mozSrcObject = video1;
+        localvideo1.mozSrcObject = stream1;
         localvideo1.play();
         pc1.addStream(stream1);
 
         navigator.mediaDevices.getUserMedia(fakeVideoConstraints)
           .then(stream2 => {
-            localvideo2.mozSrcObject = video2;
+            localvideo2.mozSrcObject = stream2;
             localvideo2.play();
             pc2.addStream(stream2);
             // Start the signaling.
