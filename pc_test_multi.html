@@ -28,8 +28,8 @@
     }
     #localvideo1, #localvideo2 {
       position:absolute;
-      bottom:0;
-      right:0;
+      top:0;
+      left:0;
       z-index:1;
     }
 
@@ -48,13 +48,12 @@
 <br>
 <div>
 <div id="player1">
-<video tabindex="0" id="pc1video" class="mainvideo" controls="controls"
-height="240" width="320" muted autoplay mozMediaStaticsticsShowing></video>
+<video tabindex="0" id="pc1video" class="mainvideo" controls="controls" height="240" width="320" muted autoplay></video>
 <video tabindex="0" id="localvideo1" controls="controls" height="120" width="160" muted></video>
 </div>
 <div id="player2">
 <div id="player2video">
-<video tabindex="0" id="pc2video" class="mainvideo" controls="controls" height="240" width="320" muted autoplay mozMediaStaticsticsShowing></video>
+<video tabindex="0" id="pc2video" class="mainvideo" controls="controls" height="240" width="320" muted autoplay></video>
 <video tabindex="0" id="localvideo2" controls="controls" height="120" width="160" muted></video>
 </div>
 <div id="player2screen">
@@ -173,7 +172,28 @@ height="240" width="320" muted autoplay mozMediaStaticsticsShowing></video>
     }
     log("Signaling is done");
 
+    showScreenButton();
+  }
+
+  function showScreenButton() {
+    screenbutton.innerHTML = "Share Screen";
+    screenbutton.onclick = screenShare;
     document.getElementById('divscreen').style.display = 'block';
+  }
+
+  function hideScreenButton() {
+    hideScreenVideo();
+    document.getElementById('divscreen').style.display = 'none';
+  }
+
+  function showScreenVideo() {
+    pc3video.style.display = 'block';
+    screenbutton.innerHTML = "Stop Screen Share";
+    screenbutton.onclick = stopScreenShare;
+  }
+
+  function hideScreenVideo() {
+    pc3video.style.display = 'none';
   }
 
   function stopScreenShare() {
@@ -182,9 +202,7 @@ height="240" width="320" muted autoplay mozMediaStaticsticsShowing></video>
     });
     screenSenders = [];
 
-    screenbutton.innerHTML = "Share Screen";
-    screenbutton.onclick = screenShare;
-    pc3video.style.display = 'none';
+    hideScreenVideo();
   }
 
   function screenShare() {
@@ -199,9 +217,7 @@ height="240" width="320" muted autoplay mozMediaStaticsticsShowing></video>
       .then(stream => {
         log("Got a screen share stream");
 
-        pc3video.style.display = 'block';
-        screenbutton.innerHTML = "Stop Screen Share";
-        screenbutton.onclick = stopScreenShare;
+        showScreenVideo();
 
         stream.getTracks().forEach(track => {
           screenSenders.push(pc1.addTrack(track, stream));
@@ -301,7 +317,7 @@ height="240" width="320" muted autoplay mozMediaStaticsticsShowing></video>
     callbutton.innerHTML = "Start Call";
     callbutton.onclick = start;
 
-    document.getElementById('divscreen').style.display = 'none';
+    hideScreenButton();
   }
 </script>
 
