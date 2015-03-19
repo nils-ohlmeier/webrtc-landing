@@ -193,17 +193,18 @@
       pc1.createOffer(step1, failed);
     };
 
-    navigator.mozGetUserMedia(screenConstraints, function(stream) {
-      log("Got a screen share stream");
+    navigator.mediaDevices.getUserMedia(screenConstraints)
+      .then(stream => {
+        log("Got a screen share stream");
 
-      pc3video.style.display = 'block';
-      screenbutton.innerHTML = "Stop Screen Share";
-      screenbutton.onclick = stopScreenShare;
+        pc3video.style.display = 'block';
+        screenbutton.innerHTML = "Stop Screen Share";
+        screenbutton.onclick = stopScreenShare;
 
-      stream.getTracks().forEach(track => {
-        screenSenders.push(pc1.addTrack(track, stream));
+        stream.getTracks().forEach(track => {
+          screenSenders.push(pc1.addTrack(track, stream));
+        });
       });
-    }, function (err) {failed(err, screenConstraints);});
   }
 
   function start() {
@@ -275,16 +276,16 @@
     let fakeVideoConstraints = {video: true, fake: true };
 
     navigator.mediaDevices.getUserMedia(videoConstraints)
-      .then(video1 => {
+      .then(stream1 => {
         localvideo1.mozSrcObject = video1;
         localvideo1.play();
-        pc1.addStream(video1);
+        pc1.addStream(stream1);
 
         navigator.mediaDevices.getUserMedia(fakeVideoConstraints)
-          .then(video2 => {
+          .then(stream2 => {
             localvideo2.mozSrcObject = video2;
             localvideo2.play();
-            pc2.addStream(video2);
+            pc2.addStream(stream2);
             // Start the signaling.
             pc1.createOffer().then(step1, failed);
           });
