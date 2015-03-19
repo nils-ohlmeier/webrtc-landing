@@ -176,13 +176,13 @@
   }
 
   function showScreenButton() {
-    screenbutton.innerHTML = "Share Screen";
-    screenbutton.onclick = screenShare;
     document.getElementById('divscreen').style.display = 'block';
   }
 
   function hideScreenButton() {
     hideScreenVideo();
+    screenbutton.innerHTML = "Share Screen";
+    screenbutton.onclick = screenShare;
     document.getElementById('divscreen').style.display = 'none';
   }
 
