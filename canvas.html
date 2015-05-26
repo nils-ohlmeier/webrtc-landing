@@ -98,7 +98,7 @@
   let fake = document.getElementById("fake");
   fake.checked = true;
   let oneway = document.getElementById("oneway");
-  oneway.checked = false;
+  oneway.checked = true;
   let audio_only = document.getElementById("audio_only");
   audio_only.checked = false;
   let video_disable = document.getElementById("disable_video");
@@ -346,7 +346,7 @@
 
     start_cloth(mycanvas);
 
-    localvideo1.mozSrcObject = mycanvas.captureStream(10);
+    localvideo1.mozSrcObject = mycanvas.captureStream(15);
     if (video_disable.checked)
       localvideo1.mozSrcObject.getVideoTracks()[0].enabled = false;
     if (audio_disable.checked)
