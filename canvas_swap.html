@@ -65,11 +65,9 @@ Poke at the mesh after hitting 'Start'
 <div>
 <div id="player1">
 <canvas id="c"></canvas>
-<video tabindex="0" id="pc1video" class="mainvideo" controls="controls" height="240" width="320" muted autoplay></video>
 <video tabindex="0" id="localvideo1" controls="controls" height="120" width="160" muted></video></div>
 <div id="player2">
 <video tabindex="0" id="pc2video" class="mainvideo" controls="controls" height="350" width="560" muted autoplay></video>
-<video tabindex="0" id="localvideo2" controls="controls" height="120" width="160" muted></video></div><br>
 <br style="clear: left;" />
 </div>
 <div id="log"></div>
@@ -90,14 +88,11 @@ Poke at the mesh after hitting 'Start'
   let mycanvas = document.getElementById("c");
   mycanvas.id = 'source_canvas';
 
-  let pc1video = document.getElementById("pc1video");
   let pc2video = document.getElementById("pc2video");
-  pc1video.onplay = function() {log("Play for pc1");};
-  pc2video.onplay = function() {log("Play for pc2");};
+  pc2video.onplay = function() {};
 
   let button = document.getElementById("tehbutton");
   let localvideo1 = document.getElementById("localvideo1");
-  let localvideo2 = document.getElementById("localvideo2");
   let swapped = false;
   let audio_only = document.getElementById("audio_only");
   audio_only.checked = false;
@@ -136,7 +131,7 @@ Poke at the mesh after hitting 'Start'
     if (pc == pc1)
       stream = localvideo1.mozSrcObject;
     else if (pc == pc2)
-      stream = localvideo2.mozSrcObject;
+      ;//stream = localvideo2.mozSrcObject;
     else log("bad pc " + pc);
 
     if (stream) {
@@ -154,15 +149,15 @@ Poke at the mesh after hitting 'Start'
 
   function replace_track(pc) {
     swapped = !swapped;
-    log("replace_track = " + swapped);
+    //log("replace_track = " + swapped);
 
     //senders1['audio'].replaceTrack(fake_stream.getAudioTracks()[0], function() {}, failed);
     localvideo1.mozSrcObject = fake_stream;
     localvideo1.play();
     let old_video = senders1['video'].track;
-    log(old_video);
+    //log(old_video);
     senders1['video'].replaceTrack(fake_stream.getVideoTracks()[0], function() {});
-    log("Replaced video with fake");
+    //log("Replaced video with fake");
     let temp = real_stream;
     real_stream = fake_stream;
     fake_stream = temp;
@@ -299,7 +294,7 @@ Poke at the mesh after hitting 'Start'
     while (pc1.ice_queued.length > 0) {
       pc1.addIceCandidate(pc1.ice_queued.shift());
     }
-    log("HIP HIP HOORAY");
+    //log("HIP HIP HOORAY");
   }
 
   function xstart() {
@@ -340,12 +335,12 @@ Poke at the mesh after hitting 'Start'
     }
 
     pc1.onaddstream = function(obj) {
-      log("pc1 got remote stream from pc2 " + obj.type);
-      pc1video.mozSrcObject = obj.stream;
+      //log("pc1 got remote stream from pc2 " + obj.type);
+      //pc1video.mozSrcObject = obj.stream;
       //setTimeout(pc1video.play, 1000);
     }
     pc2.onaddstream = function(obj) {
-      log("pc2 got remote stream from pc1 " + obj.type);
+      //log("pc2 got remote stream from pc1 " + obj.type);
       pc2video.mozSrcObject = obj.stream;
       //setTimeout(pc2video.play, 1000);
     }
@@ -384,9 +379,22 @@ Poke at the mesh after hitting 'Start'
   function stop() {
     pc1.close();
     pc2.close();
+    pc1 = null;
+    pc2 = null;
+    real_stream.getTracks().forEach(function(track) {
+      track.stop();
+    });
+    fake_stream.getTracks().forEach(function(track) {
+      track.stop();
+    });
+    localvideo1.mozSrcObject = null;
+    pc2video.mozSrcObject = null;
+    real_stream = null;
+    fake_stream = null;
+    swapped = false;
 
     button.innerHTML = "Start!";
-    button.onclick = start;
+    button.onclick = xstart;
   }
 </script>
 
