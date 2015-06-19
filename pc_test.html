@@ -27,7 +27,7 @@
       z-index:1;
     }
 
-    .hidden 
+    .hidden
     {
       display: none;
     }
@@ -57,6 +57,14 @@
   <br>
   <input type="checkbox" id="prefermode0" value="Prefer Mode 0">
   <label for="prefermode0">Prefer H.264 Mode 0</label>
+</div>
+<div id="idpDetails">
+  <input type="checkbox" id="idp" value="Require G.722">
+  <label for="idp">Enable Identity Provider</label>:
+  <label for="idpdomain">Domain</label>
+  <input type="text" id="idpdomain" value="martinthomson.github.io">
+  <label for="idpprotocol">Protocol</label>
+  <input type="text" id="idpprotocol" value="idp.js">
 </div>
 </div><br>
 <div>
@@ -104,6 +112,8 @@
   prefermode0.checked = false;
   let requireg722 = document.getElementById("requireg722");
   requireg722.checked = false;
+  let idp = document.getElementById("idp");
+  idp.checked = true;
 
   let pc1;
   let pc2;
@@ -180,9 +190,9 @@
 
   function h264StateChange(cb)
   {
-    var h264opts = document.getElementById('divH264'); 
+    var h264opts = document.getElementById('divH264');
     if(cb.checked){
-      h264opts.style.display = 'block'; 
+      h264opts.style.display = 'block';
     } else {
       h264opts.style.display = 'none';
     }
@@ -348,6 +358,15 @@
         localvideo1.mozSrcObject.getAudioTracks()[0].enabled = false;
       localvideo1.play();
       pc1.addStream(video1);
+
+      if (idp.checked) {
+        let idpdomain = document.getElementById('idpdomain').value;
+        let idpprotocol = document.getElementById('idpprotocol').value;
+        pc1.setIdentityProvider(idpdomain, idpprotocol);
+        pc2.setIdentityProvider(idpdomain, idpprotocol);
+        pc1.peerIdentity.then(id => log('pc1 connected to ' + id.username));
+        pc2.peerIdentity.then(id => log('pc2 connected to ' + id.username));
+      }
 
       if (!oneway.checked) {
         navigator.mozGetUserMedia(myrequest_reverse, function(video2) {
