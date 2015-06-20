@@ -147,6 +147,7 @@
   }
 
   function failed(code) {
+    console.log(code);
     log("Failure callback: " + JSON.stringify(code));
   }
 
@@ -364,8 +365,8 @@
         let idpprotocol = document.getElementById('idpprotocol').value;
         pc1.setIdentityProvider(idpdomain, idpprotocol);
         pc2.setIdentityProvider(idpdomain, idpprotocol);
-        pc1.peerIdentity.then(id => log('pc1 connected to ' + id.username));
-        pc2.peerIdentity.then(id => log('pc2 connected to ' + id.username));
+        pc1.peerIdentity.then(id => log('pc1 connected to "' + id.name + '"'));
+        pc2.peerIdentity.then(id => log('pc2 connected to "' + id.name + '"'));
       }
 
       if (!oneway.checked) {
