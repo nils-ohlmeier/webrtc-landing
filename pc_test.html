@@ -65,6 +65,10 @@
   <input type="text" id="idpdomain" value="martinthomson.github.io">
   <label for="idpprotocol">Protocol</label>
   <input type="text" id="idpprotocol" value="idp.js">
+  <label for="idpusera">User A Name</label>
+  <input type="text" id="idpusera" value="">
+  <label for="idpuserb">User B Name</label>
+  <input type="text" id="idpuserb" value="">
 </div>
 </div><br>
 <div>
@@ -112,8 +116,8 @@
   prefermode0.checked = false;
   let requireg722 = document.getElementById("requireg722");
   requireg722.checked = false;
-  let idp = document.getElementById("idp");
-  idp.checked = true;
+  let idpenabled = document.getElementById("idp");
+  idpenabled.checked = true;
 
   let pc1;
   let pc2;
@@ -289,8 +293,50 @@
     button.innerHTML = "Stop!";
     button.onclick = stop;
 
-    pc1 = new mozRTCPeerConnection();
-    pc2 = new mozRTCPeerConnection();
+    var pc1config = {};
+    var pc2config = {};
+    let idp;
+
+    var myrequest = { audio: true };
+    if (!(audio_only.checked)) {
+      myrequest = { audio: true, video: true };
+    }
+
+    myrequest_reverse = copy_dictionary(myrequest);
+    if (fake.checked) {
+      myrequest_reverse.fake = true;
+    }
+
+    if (oneway.checked) {
+       offer_constraints = { offerToReceiveVideo: false,
+                             offerToReceiveAudio: false };
+       answer_constraints = { offerToReceiveVideo: true,
+                              offerToReceiveAudio: true };
+    }
+
+    if (idpenabled.checked) {
+      idp = {
+        domain: document.getElementById('idpdomain').value,
+        protocol: document.getElementById('idpprotocol').value,
+        usera: document.getElementById('idpusera').value,
+        userb: document.getElementById('idpuserb').value
+      };
+
+      if (idp.usera) {
+        // Note that the peer identity constraints are applied on the *other*
+        // end of the connection.
+        myrequest_reverse.peerIdentity = idp.usera + '@' + idp.domain;
+        pc2config.peerIdentity = idp.usera + '@' + idp.domain;
+      }
+
+      if (idp.userb) {
+        myrequest.peerIdentity = idp.userb + '@' + idp.domain;
+        pc1config.peerIdentity = idp.userb + '@' + idp.domain;
+      }
+    }
+
+    pc1 = new mozRTCPeerConnection(pc1config);
+    pc2 = new mozRTCPeerConnection(pc2config);
     pc1.didSetRemote = false;
     pc2.didSetRemote = false;
     pc1.ice_queued = [];
@@ -333,24 +379,14 @@
       //setTimeout(pc2video.play, 1000);
     }
 
-    var myrequest = { audio: true };
-    if (!(audio_only.checked)) {
-      myrequest = { audio: true, video: true };
+    if (idp) {
+      pc1.setIdentityProvider(idp.domain, idp.protocol, idp.usera);
+      pc1.peerIdentity.then(id => log('pc1 connected to "' + id.name + '"'));
+      pc2.setIdentityProvider(idp.domain, idp.protocol, idp.userb);
+      pc2.peerIdentity.then(id => log('pc2 connected to "' + id.name + '"'));
     }
 
-    myrequest_reverse = copy_dictionary(myrequest);
-    if (fake.checked) {
-      myrequest_reverse.fake = true;
-    }
-
-    if (oneway.checked) {
-       offer_constraints = { mandatory: { OfferToReceiveVideo : false,
-                                           OfferToReceiveAudio: false } };
-       answer_constraints = { mandatory: { OfferToReceiveVideo : true,
-                                            OfferToReceiveAudio: true } };
-    }
-
-    navigator.mozGetUserMedia(myrequest, function(video1) {
+    navigator.mediaDevices.getUserMedia(myrequest).then(function(video1) {
       // Add stream obtained from gUM to <video> to start media flow.
       localvideo1.mozSrcObject = video1;
       if (video_disable.checked)
@@ -360,17 +396,8 @@
       localvideo1.play();
       pc1.addStream(video1);
 
-      if (idp.checked) {
-        let idpdomain = document.getElementById('idpdomain').value;
-        let idpprotocol = document.getElementById('idpprotocol').value;
-        pc1.setIdentityProvider(idpdomain, idpprotocol);
-        pc2.setIdentityProvider(idpdomain, idpprotocol);
-        pc1.peerIdentity.then(id => log('pc1 connected to "' + id.name + '"'));
-        pc2.peerIdentity.then(id => log('pc2 connected to "' + id.name + '"'));
-      }
-
       if (!oneway.checked) {
-        navigator.mozGetUserMedia(myrequest_reverse, function(video2) {
+        navigator.mediaDevices.getUserMedia(myrequest_reverse).then(function(video2) {
           localvideo2.mozSrcObject = video2;
           localvideo2.play();
           pc2.addStream(video2);
