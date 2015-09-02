@@ -1,0 +1,353 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <title>mozRTCPeerConnection Canvas Demo</title>
+  <style>
+    #player1 {
+      position:relative;
+      width:50%;
+      height:600px;
+      float:left;
+    }
+    #player2 {
+      position:relative;
+      width:50%;
+      height:600px;
+      float:right;
+    }
+    #pc1video, #pc2video {
+      height:75%;
+      width:100%;
+      max-height:240px;
+    }
+    #localvideo1, #localvideo2 {
+      position:absolute;
+      top:0;
+      left:0;
+      height:120px;
+      width:160px;
+      z-index:1;
+    }
+    #mycanvas1, #mycanvas2 {
+      position:relative;
+      height:120px;
+      width:auto;
+      float:right;
+    }
+    #thebutton {
+    }
+    #buttons {
+      display: none;
+      text-align: center;
+    }
+    #video-container {
+      padding: 15px;
+    }
+
+    .hidden 
+    {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<center>
+<a href="index.html">Main webrtc demo page</a><br>
+<h2>canvas.captureStream() Demo</h2>
+<b>NOTE: You need Firefox 41, and set canvas.capturestream.enabled to true in about:config!</b><br>
+</center>
+<div id="startstopbutton">
+<button id="thebutton" onclick="xstart();">Start!</button>
+</div>
+<div id="video-container">
+<div id="buttons"></div>
+<div id="player1">
+<canvas id="mycanvas1" width="640" height="480"></canvas>
+<video tabindex="0" id="pc1video" controls="controls" muted autoplay></video>
+<video tabindex="0" id="localvideo1" controls="controls" muted autoplay></video>
+</div>
+<div id="player2">
+<canvas id="mycanvas2"></canvas>
+<video tabindex="0" id="pc2video" controls="controls" muted autoplay></video>
+<video tabindex="0" id="localvideo2" controls="controls" muted autoplay></video>
+</div>
+<br style="clear: left;" />
+</div>
+<div id="log"></div>
+
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="seriously.js"></script>
+<script type="text/javascript" src="effects/seriously.invert.js"></script>
+<script type="text/javascript" src="effects/seriously.ascii.js"></script>
+<script type="text/javascript" src="effects/seriously.tvglitch.js"></script>
+<script type="text/javascript" src="effects/seriously.hue-saturation.js"></script>
+<script type="text/javascript" src="effects/seriously.select.js"></script>
+
+<script type="application/javascript;version=1.8">
+  let canvas1 = document.getElementById("mycanvas1");
+  let canvas2 = document.getElementById("mycanvas2");
+
+  let pc1video = document.getElementById("pc1video");
+  let pc2video = document.getElementById("pc2video");
+
+  let thebutton = document.getElementById("thebutton");
+  let buttons = document.getElementById("buttons");
+  let localvideo1 = document.getElementById("localvideo1");
+
+  let pc1;
+  let pc2;
+
+  let pc1_offer;
+  let pc2_answer;
+
+  let fake_stream;
+  let real_stream;
+  let canvas_stream;
+
+  var senders1 = [ ];
+  var senders2 = [ ];
+
+  var seriously = new Seriously();
+  var source = seriously.source('#localvideo1');
+  var target = seriously.target('#mycanvas1');
+  var effects = {
+    invert: {},
+    tvglitch: {
+      distortion: 0.02,
+      verticalSync: 0,
+      scanlines: 0.22,
+      lineSync: 0.03,
+      frameSharpness: 10.67,
+      frameLimit: 0.3644,
+      bars: 0.55},
+    ascii: {},
+    'hue-saturation': {}
+  };
+  var select = seriously.effect('select', {
+    count: Object.keys(effects).length
+  });
+  source.on('ready', function() {
+    target.width = source.width;
+    target.height = target.height;
+  });
+  target.source = select;
+  Object.keys(effects).forEach(function (key, index) {
+    var effect = seriously.effect(key);
+    var opts = effects[key];
+
+    effect.source = '#localvideo1';
+    select['source' + index] = effect;
+    effects[key] = effect;
+
+    for (var k in opts) {
+      if (opts.hasOwnProperty(k)) {
+        effect[k] = opts[k];
+      }
+    }
+
+    var button = $('<button/>', {
+      text: key,
+      click: function() {
+        select.active = index;
+      }
+    });
+    $('#buttons').append(button);
+  });
+
+  function log(msg) {
+    let div = document.getElementById("log");
+    div.innerHTML = div.innerHTML + "<p>" + msg + "</p>";
+  }
+
+  function failed(code) {
+    log("Failure callback: " + JSON.stringify(code));
+  }
+
+  // pc1.createOffer finished, call pc1.setLocal
+  function step1(offer) {
+    log("Offer:  " + sdpPrettyPrint(offer.sdp));
+    pc1_offer = offer;
+
+    pc1.setLocalDescription(offer, step2, failed);
+  }
+
+  // replace CR NL with HTML breaks
+  function sdpPrettyPrint(sdp) {
+    return sdp.replace(/[\r\n]+/g, '<br>');
+  }
+
+  // pc1.setLocal finished, call pc2.setRemote
+  function step2() {
+    pc1.onicecandidate = function(obj) {
+      if (obj.candidate) {
+        log("pc1 found ICE candidate: " + JSON.stringify(obj.candidate));
+        pc2.addIceCandidate(obj.candidate);
+      } else {
+        log("pc1 got end-of-candidates signal");
+      }
+    }
+
+    pc2.setRemoteDescription(pc1_offer, step3, failed);
+  };
+
+  // pc2.setRemote finished, call pc2.createAnswer
+  function step3() {
+    pc2.didSetRemote = true;
+    while (pc2.ice_queued.length > 0) {
+      pc2.addIceCandidate(pc2.ice_queued.shift());
+    }
+    pc2.createAnswer(step4, failed);
+  }
+
+  // pc2.createAnswer finished, call pc2.setLocal
+  function step4(answer) {
+    log("Answer:  " + sdpPrettyPrint(answer.sdp));
+    pc2_answer = answer;
+
+    pc2.setLocalDescription(answer, step5, failed);
+  }
+
+  // pc2.setLocal finished, call pc1.setRemote
+  function step5() {
+    pc2.onicecandidate = function(obj) {
+      if (obj.candidate) {
+        log("pc2 found ICE candidate: " + JSON.stringify(obj.candidate));
+        pc1.addIceCandidate(obj.candidate);
+      } else {
+        log("pc2 got end-of-candidates signal");
+      }
+    }
+
+    pc1.setRemoteDescription(pc2_answer, step6, failed);
+  }
+
+  // pc1.setRemote finished, media should be running!
+  function step6() {
+    pc1.didSetRemote = true;
+    while (pc1.ice_queued.length > 0) {
+      pc1.addIceCandidate(pc1.ice_queued.shift());
+    }
+    log("Offer/Answer finished");
+  }
+
+  function xstart() {
+    thebutton.innerHTML = "Stop!";
+    thebutton.onclick = stop;
+
+    pc1 = new mozRTCPeerConnection();
+    pc2 = new mozRTCPeerConnection();
+    pc1.didSetRemote = false;
+    pc2.didSetRemote = false;
+    pc1.ice_queued = [];
+    pc2.ice_queued = [];
+
+    pc2.onicecandidate = function(obj) {
+      if (obj.candidate) {
+        log("pc2 found ICE candidate: " + JSON.stringify(obj.candidate));
+        if (pc1.didSetRemote) {
+          pc1.addIceCandidate(obj.candidate);
+        } else {
+          pc1.ice_queued.push(obj.candidate);
+        }
+      } else {
+        log("pc2 got end-of-candidates signal");
+      }
+    }
+
+    pc1.onicecandidate = function(obj) {
+      if (obj.candidate) {
+        log("pc1 found ICE candidate: " + JSON.stringify(obj.candidate));
+        if (pc2.didSetRemote) {
+          pc2.addIceCandidate(obj.candidate);
+        } else {
+          pc2.ice_queued.push(obj.candidate);
+        }
+      } else {
+        log("pc1 got end-of-candidates signal");
+      }
+    }
+
+    pc1.onaddstream = function(obj) {
+      log("pc1 got remote stream from pc2 " + obj.type);
+      pc1video.mozSrcObject = obj.stream;
+    }
+    pc2.onaddstream = function(obj) {
+      log("pc2 got remote stream from pc1 " + obj.type);
+      pc2video.mozSrcObject = obj.stream;
+    }
+
+    var myrequest = { audio: true, video: true };
+
+    var myrequest_reverse = { video: true, fake: true };
+
+    navigator.mediaDevices.getUserMedia(myrequest).then(function(stream1) {
+      real_stream = stream1;
+      var local_stream = stream1;
+
+
+      localvideo1.mozSrcObject = real_stream;
+
+      seriously.go(function () {
+        effects.tvglitch.time = Date.now();
+      });
+
+      if (canvas1.captureStream) {
+        canvas_stream = canvas1.captureStream(15);
+        local_stream = canvas_stream;
+        $('#mycanvas1').show();
+        $('#buttons').show();
+      }
+
+      local_stream.getTracks().forEach(function(track) {
+         senders1[track.kind] = pc1.addTrack(track, local_stream);
+      });
+
+      navigator.mediaDevices.getUserMedia(myrequest_reverse).then(function(stream2)
+      {
+        fake_stream = stream2;
+
+        localvideo2.mozSrcObject = stream2;
+        pc2.addStream(stream2);
+
+        pc1.createOffer(step1, failed);
+      }, failed)
+    }, failed);
+  }
+
+  function stop() {
+    $('#mycanvas1').hide();
+    $('#buttons').hide();
+    pc1.close();
+    pc2.close();
+    pc1 = null;
+    pc2 = null;
+    real_stream.getTracks().forEach(function(track) {
+      track.stop();
+    });
+    real_stream = null;
+    fake_stream.getTracks().forEach(function(track) {
+      track.stop();
+    });
+    fake_stream = null;
+    if (canvas_stream) {
+      canvas_stream.getTracks().forEach(function(track) {
+        track.stop();
+      });
+      canvas_stream = null;
+    }
+    localvideo1.pause();
+    localvideo1.mozSrcObject = null;
+    localvideo2.pause();
+    localvideo2.mozSrcObject = null;
+    pc1video.pause();
+    pc1video.mozSrcObject = null;
+    pc2video.pause();
+    pc2video.mozSrcObject = null;
+
+    thebutton.innerHTML = "Start!";
+    thebutton.onclick = xstart;
+  }
+</script>
+
+
+</body></html>
