@@ -5,13 +5,13 @@
     #player1 {
       position:relative;
       width:50%;
-      height:600px;
+      height:500px;
       float:left;
     }
     #player2 {
       position:relative;
       width:50%;
-      height:600px;
+      height:500px;
       float:right;
     }
     #pc1video, #pc2video {
@@ -84,15 +84,19 @@
 <script type="text/javascript" src="effects/seriously.select.js"></script>
 
 <script type="application/javascript;version=1.8">
-  let canvas1 = document.getElementById("mycanvas1");
-  let canvas2 = document.getElementById("mycanvas2");
-
   let pc1video = document.getElementById("pc1video");
   let pc2video = document.getElementById("pc2video");
 
+  let localvideo1 = document.getElementById("localvideo1");
+  let localvideo2 = document.getElementById("localvideo2");
+
+  let canvas1 = document.getElementById("mycanvas1");
+  let canvas2 = document.getElementById("mycanvas2");
+
   let thebutton = document.getElementById("thebutton");
   let buttons = document.getElementById("buttons");
-  let localvideo1 = document.getElementById("localvideo1");
+
+  let logarea = document.getElementById("log");
 
   let pc1;
   let pc2;
@@ -105,7 +109,6 @@
   let canvas_stream;
 
   var senders1 = [ ];
-  var senders2 = [ ];
 
   var seriously = new Seriously();
   var source = seriously.source('#localvideo1');
@@ -155,8 +158,7 @@
   });
 
   function log(msg) {
-    let div = document.getElementById("log");
-    div.innerHTML = div.innerHTML + "<p>" + msg + "</p>";
+    logarea.innerHTML = "<p>" + msg + "</p>" + logarea.innerHTML;
   }
 
   function failed(code) {
@@ -343,6 +345,8 @@
     pc1video.mozSrcObject = null;
     pc2video.pause();
     pc2video.mozSrcObject = null;
+
+    senders1 = [];
 
     thebutton.innerHTML = "Start!";
     thebutton.onclick = xstart;
