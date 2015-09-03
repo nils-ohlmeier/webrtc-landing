@@ -69,7 +69,9 @@
 <div id="player2">
 <canvas id="mycanvas2"></canvas>
 <video tabindex="0" id="pc2video" controls="controls" muted autoplay></video>
+<!--
 <video tabindex="0" id="localvideo2" controls="controls" muted autoplay></video>
+-->
 </div>
 <br style="clear: left;" />
 </div>
@@ -82,13 +84,14 @@
 <script type="text/javascript" src="effects/seriously.tvglitch.js"></script>
 <script type="text/javascript" src="effects/seriously.hue-saturation.js"></script>
 <script type="text/javascript" src="effects/seriously.select.js"></script>
+<script type="text/javascript" src="Cloth.js"></script>
 
 <script type="application/javascript;version=1.8">
   let pc1video = document.getElementById("pc1video");
   let pc2video = document.getElementById("pc2video");
 
   let localvideo1 = document.getElementById("localvideo1");
-  let localvideo2 = document.getElementById("localvideo2");
+  //let localvideo2 = document.getElementById("localvideo2");
 
   let canvas1 = document.getElementById("mycanvas1");
   let canvas2 = document.getElementById("mycanvas2");
@@ -304,6 +307,12 @@
          senders1[track.kind] = pc1.addTrack(track, local_stream);
       });
 
+      start_cloth(canvas2);
+      cloth_stream = canvas2.captureStream(15);
+      pc2.addStream(cloth_stream);
+
+      pc1.createOffer(step1, failed);
+      /*
       navigator.mediaDevices.getUserMedia(myrequest_reverse).then(function(stream2)
       {
         fake_stream = stream2;
@@ -313,6 +322,7 @@
 
         pc1.createOffer(step1, failed);
       }, failed)
+      */
     }, failed);
   }
 
@@ -339,8 +349,8 @@
     }
     localvideo1.pause();
     localvideo1.mozSrcObject = null;
-    localvideo2.pause();
-    localvideo2.mozSrcObject = null;
+    //localvideo2.pause();
+    //localvideo2.mozSrcObject = null;
     pc1video.pause();
     pc1video.mozSrcObject = null;
     pc2video.pause();
