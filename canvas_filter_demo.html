@@ -1,46 +1,38 @@
 <html><head>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
-  <title>mozRTCPeerConnection Canvas Demo</title>
+  <title>mozRTCPeerConnection Canvas Filter Demo</title>
   <style>
-    #player1 {
+    #video-container {
+      padding: 15px;
+      -moz-column-count: 3;
+    }
+    #preview {
       position:relative;
-      width:50%;
-      height:500px;
-      float:left;
+      height:400px;
     }
-    #player2 {
-      position:relative;
-      width:50%;
-      height:500px;
-      float:right;
+    #canvas {
+      height:400px;
     }
-    #pc1video, #pc2video {
-      height:75%;
-      width:100%;
-      max-height:240px;
+    #video {
+      height:400px;
     }
-    #localvideo1, #localvideo2 {
-      position:absolute;
-      top:0;
-      left:0;
+    #localvideo1 {
       height:120px;
       width:160px;
-      z-index:1;
     }
-    #mycanvas1, #mycanvas2 {
-      position:relative;
+    #mycanvas1 {
       height:120px;
       width:auto;
-      float:right;
+    }
+    #pc2video {
+      height:auto;
+      width:100%;
+      max-height:380px;
     }
     #thebutton {
     }
     #buttons {
       display: none;
-      text-align: center;
-    }
-    #video-container {
-      padding: 15px;
     }
 
     .hidden 
@@ -53,27 +45,26 @@
 
 <center>
 <a href="index.html">Main webrtc demo page</a><br>
-<h2>canvas.captureStream() Demo</h2>
+<h2>Canvas as a Filter Demo</h2>
 <b>NOTE: You need Firefox 41, and set canvas.capturestream.enabled to true in about:config!</b><br>
 </center>
 <div id="startstopbutton">
-<button id="thebutton" onclick="xstart();">Start!</button>
+  <button id="thebutton" onclick="xstart();">Start!</button>
 </div>
 <div id="video-container">
-<div id="buttons"></div>
-<div id="player1">
-<canvas id="mycanvas1" width="640" height="480"></canvas>
-<video tabindex="0" id="pc1video" controls="controls" muted autoplay></video>
-<video tabindex="0" id="localvideo1" controls="controls" muted autoplay></video>
-</div>
-<div id="player2">
-<canvas id="mycanvas2"></canvas>
-<video tabindex="0" id="pc2video" controls="controls" muted autoplay></video>
-<!--
-<video tabindex="0" id="localvideo2" controls="controls" muted autoplay></video>
--->
-</div>
-<br style="clear: left;" />
+  <div id="preview">
+    <h3>Local Preview</h3>
+    <video id="localvideo1" controls="controls" muted autoplay></video>
+  </div>
+  <div id="canvas">
+    <h3>Canvas</h3>
+    <div id="buttons"></div>
+    <canvas id="mycanvas1" width="640" height="480"></canvas>
+  </div>
+  <div id="video">
+    <h3>Remote Video</h3>
+    <video id="pc2video" controls="controls" muted autoplay></video>
+  </div>
 </div>
 <div id="log"></div>
 
@@ -84,17 +75,14 @@
 <script type="text/javascript" src="effects/seriously.tvglitch.js"></script>
 <script type="text/javascript" src="effects/seriously.hue-saturation.js"></script>
 <script type="text/javascript" src="effects/seriously.select.js"></script>
-<script type="text/javascript" src="Cloth.js"></script>
 
 <script type="application/javascript;version=1.8">
-  let pc1video = document.getElementById("pc1video");
   let pc2video = document.getElementById("pc2video");
 
   let localvideo1 = document.getElementById("localvideo1");
-  //let localvideo2 = document.getElementById("localvideo2");
 
+  let canvas = document.getElementById("canvas");
   let canvas1 = document.getElementById("mycanvas1");
-  let canvas2 = document.getElementById("mycanvas2");
 
   let thebutton = document.getElementById("thebutton");
   let buttons = document.getElementById("buttons");
@@ -107,7 +95,11 @@
   let pc1_offer;
   let pc2_answer;
 
-  let fake_stream;
+  let offer_constraints = { offerToReceiveVideo: false,
+                            offerToReceiveAudio: false };
+  let answer_constraints = { offerToReceiveVideo: true,
+                             offerToReceiveAudio: true };
+
   let real_stream;
   let canvas_stream;
 
@@ -168,6 +160,10 @@
     log("Failure callback: " + JSON.stringify(code));
   }
 
+  function logReset() {
+    logarea.innerHTML = "";
+  }
+
   // pc1.createOffer finished, call pc1.setLocal
   function step1(offer) {
     log("Offer:  " + sdpPrettyPrint(offer.sdp));
@@ -201,7 +197,7 @@
     while (pc2.ice_queued.length > 0) {
       pc2.addIceCandidate(pc2.ice_queued.shift());
     }
-    pc2.createAnswer(step4, failed);
+    pc2.createAnswer(step4, failed, answer_constraints);
   }
 
   // pc2.createAnswer finished, call pc2.setLocal
@@ -272,10 +268,6 @@
       }
     }
 
-    pc1.onaddstream = function(obj) {
-      log("pc1 got remote stream from pc2 " + obj.type);
-      pc1video.mozSrcObject = obj.stream;
-    }
     pc2.onaddstream = function(obj) {
       log("pc2 got remote stream from pc1 " + obj.type);
       pc2video.mozSrcObject = obj.stream;
@@ -283,83 +275,62 @@
 
     var myrequest = { video: true };
 
-    var myrequest_reverse = { video: true, fake: true };
-
     navigator.mediaDevices.getUserMedia(myrequest).then(function(stream1) {
       real_stream = stream1;
       var local_stream = stream1;
 
-
       localvideo1.mozSrcObject = real_stream;
 
-      seriously.go(function () {
-        effects.tvglitch.time = Date.now();
-      });
-
       if (canvas1.captureStream) {
+        seriously.go(function () {
+          effects.tvglitch.time = Date.now();
+        });
+
         canvas_stream = canvas1.captureStream(15);
         local_stream = canvas_stream;
         $('#mycanvas1').show();
         $('#buttons').show();
+      } else {
+        canvas.innerHTML = canvas.innerHTML + "<p></p><h2>Missing canvas.captureStream() support</h2>";
       }
 
       local_stream.getTracks().forEach(function(track) {
          senders1[track.kind] = pc1.addTrack(track, local_stream);
       });
 
-      start_cloth(canvas2);
-      cloth_stream = canvas2.captureStream(15);
-      pc2.addStream(cloth_stream);
 
-      pc1.createOffer(step1, failed);
-      /*
-      navigator.mediaDevices.getUserMedia(myrequest_reverse).then(function(stream2)
-      {
-        fake_stream = stream2;
-
-        localvideo2.mozSrcObject = stream2;
-        pc2.addStream(stream2);
-
-        pc1.createOffer(step1, failed);
-      }, failed)
-      */
+      pc1.createOffer(step1, failed, offer_constraints);
     }, failed);
   }
 
   function stop() {
     $('#mycanvas1').hide();
     $('#buttons').hide();
-    pc1.close();
-    pc2.close();
-    pc1 = null;
-    pc2 = null;
+    localvideo1.pause();
+    localvideo1.mozSrcObject = null;
+    pc2video.pause();
+    pc2video.mozSrcObject = null;
     real_stream.getTracks().forEach(function(track) {
       track.stop();
     });
     real_stream = null;
-    fake_stream.getTracks().forEach(function(track) {
-      track.stop();
-    });
-    fake_stream = null;
     if (canvas_stream) {
       canvas_stream.getTracks().forEach(function(track) {
         track.stop();
       });
       canvas_stream = null;
     }
-    localvideo1.pause();
-    localvideo1.mozSrcObject = null;
-    //localvideo2.pause();
-    //localvideo2.mozSrcObject = null;
-    pc1video.pause();
-    pc1video.mozSrcObject = null;
-    pc2video.pause();
-    pc2video.mozSrcObject = null;
+    pc1.close();
+    pc2.close();
+    pc1 = null;
+    pc2 = null;
 
     senders1 = [];
 
     thebutton.innerHTML = "Start!";
     thebutton.onclick = xstart;
+
+    logReset();
   }
 </script>
 
