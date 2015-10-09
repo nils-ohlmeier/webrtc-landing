@@ -24,30 +24,14 @@
   var configuration = { "iceServers": [{ "urls": ["stun:stun.l.google.com:19302" ]}]};
 
   pc1 = new mozRTCPeerConnection(configuration);
-<<<<<<< HEAD
-
-  pc1.onicecandidate = function(e) {
-    if (e.candidate) {
-      log("ICE candidate: " + JSON.stringify(e.candidate));
-    }
-  }
-=======
   pc1.onicecandidate = function(c) {
     log("ICE candidate: " + JSON.stringify(c.candidate));
   };
->>>>>>> 3dc4fa2... Update stun_test to work with current gathering semantics
 
   navigator.mozGetUserMedia({video:true, fake:true},
     function(stream) {
       pc1.addStream(stream);
       pc1.createOffer(function(offer) {
-<<<<<<< HEAD
-        log("Created offer: " + offer.sdp.replace(/[\n]/g, '<br>'));
-        pc1.setLocalDescription(offer);
-      }, failed);
-    },
-    failed);
-=======
           log("Created offer: " + offer.sdp.replace(/[\n]/g, '<br>'));
           pc1.setLocalDescription(offer, function() {}, failed);
       },
@@ -55,7 +39,6 @@
       ) 
   },
   failed);
->>>>>>> 3dc4fa2... Update stun_test to work with current gathering semantics
 
 </script>
 
