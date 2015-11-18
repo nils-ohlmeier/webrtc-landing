@@ -57,7 +57,7 @@
 <script type="application/javascript;version=1.8">
   let pc2video = document.getElementById("pc2video");
 
-  let canvas = document.getElementById("canvas");
+  let canvas0 = document.getElementById("canvas");
   let canvas1 = document.getElementById("mycanvas1");
 
   let thebutton = document.getElementById("thebutton");
@@ -201,7 +201,7 @@
     }
 
     if (!canvas1.captureStream) {
-      canvas.innerHTML = canvas.innerHTML + "<p></p><h2>Missing canvas.captureStream() support</h2>";
+      canvas0.innerHTML = canvas0.innerHTML + "<p></p><h2>Missing canvas.captureStream() support</h2>";
       return;
     }
 
