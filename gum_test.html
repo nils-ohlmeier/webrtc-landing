@@ -105,9 +105,8 @@ Note: Audio will feedback unless you use a headset!<br><br>
     video_status = true;
     mediaConstraints = {
       video: {
-        mozMediaSource: "screen",
         mediaSource: "screen"
-      }
+      },
     };
     message.innerHTML = "<p>Note: enable media.getusermedia.screensharing.enabled in about:config</p>";
     startMedia(mediaConstraints);
@@ -117,7 +116,6 @@ Note: Audio will feedback unless you use a headset!<br><br>
     video_status = true;
     mediaConstraints = {
       video: {
-        mozMediaSource: "window",
         mediaSource: "window"
       }
     };
@@ -129,7 +127,6 @@ Note: Audio will feedback unless you use a headset!<br><br>
     video_status = true;
     mediaConstraints = {
       video: {
-        mozMediaSource: "application",
         mediaSource: "application"
       }
     };
@@ -155,8 +152,11 @@ Note: Audio will feedback unless you use a headset!<br><br>
 
   function stopMedia() {
     if (video_status) {
-      video.mozSrcObject.stop();
-      video.mozSrcObject = null;
+      if (video.srcObject) {
+        video.srcObject.stop();
+      }
+      video.srcObject.stop();
+      video.srcObject = null;
       content.removeChild(video);
       stopbuttons.removeChild(snapshot);
       snapshot.value = "Snapshot";
@@ -164,12 +164,14 @@ Note: Audio will feedback unless you use a headset!<br><br>
       capturing = false;
       video_status = false;
     } else if (audio_status) {
-      audio.mozSrcObject.stop();
-      audio.mozSrcObject = null;
+      if (audio.srcObject) {
+        audio.srcObject.stop();
+      }
+      audio.srcObject = null;
       content.removeChild(audio);
       audio_status = false;
     } else if (picture_status) {
-      picture.mozSrcObject = null;
+      picture.srcObject = null;
       content.removeChild(picture);
       picture_status = false;
     }
@@ -181,28 +183,28 @@ Note: Audio will feedback unless you use a headset!<br><br>
   function pauseMedia() {
     if (saved_stream) {
       if (video_status) {
-        video.mozSrcObject = saved_stream;
+        video.srcObject = saved_stream;
         video.play();
       } else if (audio_status) {
-        audio.mozSrcObject = saved_stream;
+        audio.srcObject = saved_stream;
         audio.play();
       }
       saved_stream = null;
     } else {
       if (video_status) {
         video.pause();
-        saved_stream = video.mozSrcObject;
-        video.mozSrcObject = null;
+        saved_stream = video.srcObject;
+        video.srcObject = null;
       } else if (audio_status) {
         audio.pause();
-        saved_stream = audio.mozSrcObject;
-        audio.mozSrcObject = null;
+        saved_stream = audio.srcObject;
+        audio.srcObject = null;
       }
     }
   }
 
   function getusermedia_error(err, params) {
-    if (params.video.mediaSource) {
+    if (params.video && params.video.mediaSource) {
       if (location.protocol != "https:") {
         message.innerHTML = "<p class='error'>" + err + "</p>" +
           "<p>Screen/window sharing now requires the site be loaded from an https: URL</p>" +
@@ -224,18 +226,18 @@ Note: Audio will feedback unless you use a headset!<br><br>
   function startMedia(param) {
     stop.style.display = "block";
     start.style.display = "none";
-    try {
-      window.navigator.mozGetUserMedia(param, function(stream) {
+    var p = navigator.mediaDevices.getUserMedia(param)
+      .then(function(stream) {
         message.innerHTML = "<p>Success!</p>";
         if (video_status) {
           content.appendChild(video);
-          video.mozSrcObject = stream;
+          video.srcObject = stream;
           video.play();
           frames.innerHTML = '';
           stopbuttons.appendChild(snapshot);
         } else if (audio_status) {
           content.appendChild(audio);
-          audio.mozSrcObject = stream;
+          audio.srcObject = stream;
           audio.play();
         } else if (picture_status) {
           content.appendChild(picture);
@@ -244,10 +246,8 @@ Note: Audio will feedback unless you use a headset!<br><br>
             window.URL.revokeObjectURL(this.src);
           }
         }
-      }, function (err) { getusermedia_error(err, param); });
-    } catch(e) {
-      getusermedia_error(e, param);
-    }
+      })
+    .catch(function (err) { getusermedia_error(err, param); });
   }
 
   function startSnapshot() {
