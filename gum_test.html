@@ -232,6 +232,7 @@ Note: Audio will feedback unless you use a headset!<br><br>
         if (video_status) {
           content.appendChild(video);
           video.srcObject = stream;
+          video.muted = true;
           video.play();
           frames.innerHTML = '';
           stopbuttons.appendChild(snapshot);
