@@ -1,6 +1,6 @@
 <html><head>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
-  <title>Simple RTCPeerConnection Video Test</title>
+  <title>Simple mozRTCPeerConnection Video Test</title>
   <style>
     #player1 {
       position:relative;
@@ -35,7 +35,7 @@
 </head>
 <body>
 
-<h1>Simple RTCPeerConnection Video Test</h1>
+<h1>Simple mozRTCPeerConnection Video Test</h1>
 
 <div>
 <button id="tehbutton" onclick="start();">Start!</button>
@@ -155,6 +155,39 @@
     log("Failure callback: " + JSON.stringify(code));
   }
 
+  // pc1.createOffer finished, call pc1.setLocal
+  function step1(offer) {
+    log("Offer:  " + sdpPrettyPrint(offer.sdp));
+    pc1_offer = offer;
+
+    if (requireh264.checked) {
+      // to enforce the usage of H264 we remove the VP8 codec from the offer
+      offer.sdp = removeVP8(offer.sdp);
+      if (prefermode0.checked) {
+        offer.sdp = preferMode0(offer.sdp);
+      }
+      pc1_offer = offer;
+      log("No VP8 Offer: " + sdpPrettyPrint(offer.sdp));
+
+      if (!offer.sdp.match(/a=rtpmap:[0-9]+ H264/g)) {
+        log("No H264 found in the offer!!!");
+        return;
+      }
+    }
+    if (requireg722.checked) {
+      // to enforce the usage of G.722 we remove other codecs from the offer
+      offer.sdp = removeNonG722(offer.sdp);
+      pc1_offer = offer;
+      log("G.722 only Offer: " + sdpPrettyPrint(offer.sdp));
+
+      if (!offer.sdp.match(/a=rtpmap:[0-9]+ G722/g)) {
+        log("No G722 found in the offer!!!");
+        return;
+      }
+    }
+    pc1.setLocalDescription(offer, step2, failed);
+  }
+
   // replace CR NL with HTML breaks
   function sdpPrettyPrint(sdp) {
     return sdp.replace(/[\r\n]+/g, '<br>');
@@ -194,41 +227,8 @@
     return updated_sdp;
   }
 
-  // pc1.createOffer finished, call pc1.setLocal
-  function offerSetLocal(offer) {
-    log("Offer:  " + sdpPrettyPrint(offer.sdp));
-    pc1_offer = offer;
-
-    if (requireh264.checked) {
-      // to enforce the usage of H264 we remove the VP8 codec from the offer
-      offer.sdp = removeVP8(offer.sdp);
-      if (prefermode0.checked) {
-        offer.sdp = preferMode0(offer.sdp);
-      }
-      pc1_offer = offer;
-      log("No VP8 Offer: " + sdpPrettyPrint(offer.sdp));
-
-      if (!offer.sdp.match(/a=rtpmap:[0-9]+ H264/g)) {
-        log("No H264 found in the offer!!!");
-        return Promise.reject();
-      }
-    }
-    if (requireg722.checked) {
-      // to enforce the usage of G.722 we remove other codecs from the offer
-      offer.sdp = removeNonG722(offer.sdp);
-      pc1_offer = offer;
-      log("G.722 only Offer: " + sdpPrettyPrint(offer.sdp));
-
-      if (!offer.sdp.match(/a=rtpmap:[0-9]+ G722/g)) {
-        log("No G722 found in the offer!!!");
-        return Promise.reject();
-      }
-    }
-    return pc1.setLocalDescription(offer);
-  }
-
   // pc1.setLocal finished, call pc2.setRemote
-  function offerSetRemote() {
+  function step2() {
     pc1.onicecandidate = function(obj) {
       if (obj.candidate) {
         log("pc1 found ICE candidate: " + JSON.stringify(obj.candidate));
@@ -238,36 +238,36 @@
       }
     }
 
-    return pc2.setRemoteDescription(pc1_offer);
+    pc2.setRemoteDescription(pc1_offer, step3, failed);
   };
 
   // pc2.setRemote finished, call pc2.createAnswer
-  function createAnswer() {
+  function step3() {
     pc2.didSetRemote = true;
     while (pc2.ice_queued.length > 0) {
       pc2.addIceCandidate(pc2.ice_queued.shift());
     }
-    return pc2.createAnswer(answer_constraints);
+    pc2.createAnswer(step4, failed,  answer_constraints);
   }
 
   // pc2.createAnswer finished, call pc2.setLocal
-  function answerSetLocal(answer) {
+  function step4(answer) {
     log("Answer:  " + sdpPrettyPrint(answer.sdp));
     pc2_answer = answer;
 
     if ((requireh264.checked) && (!answer.sdp.match(/a=rtpmap:[0-9]+ H264/g))) {
       log("No H264 found in the answer!!!");
-      return Promise.reject();
+      return;
     }
     if ((requireg722.checked) && (!answer.sdp.match(/a=rtpmap:[0-9]+ G722/g))) {
       log("No G722 found in the answer!!!");
-      return Promise.reject();
+      return;
     }
-    return pc2.setLocalDescription(answer);
+    pc2.setLocalDescription(answer, step5, failed);
   }
 
   // pc2.setLocal finished, call pc1.setRemote
-  function answerSetRemote() {
+  function step5() {
     pc2.onicecandidate = function(obj) {
       if (obj.candidate) {
         log("pc2 found ICE candidate: " + JSON.stringify(obj.candidate));
@@ -277,24 +277,24 @@
       }
     }
 
-    return pc1.setRemoteDescription(pc2_answer);
+    pc1.setRemoteDescription(pc2_answer, step6, failed);
   }
 
   // pc1.setRemote finished, media should be running!
-  function finished() {
+  function step6() {
     pc1.didSetRemote = true;
     while (pc1.ice_queued.length > 0) {
       pc1.addIceCandidate(pc1.ice_queued.shift());
     }
-    log("Signaling done");
+    log("HIP HIP HOORAY");
   }
 
   function start() {
     button.innerHTML = "Stop!";
     button.onclick = stop;
 
-    var pc1config = { "iceServers": [{ "urls": ["stun:stun.l.google.com:19302" ]}]};
-    var pc2config = { "iceServers": [{ "urls": ["stun:stun.l.google.com:19302" ]}]};
+    var pc1config = {};
+    var pc2config = {};
     let idp;
 
     var myrequest = { audio: true };
@@ -335,8 +335,8 @@
       }
     }
 
-    pc1 = new RTCPeerConnection(pc1config);
-    pc2 = new RTCPeerConnection(pc2config);
+    pc1 = new mozRTCPeerConnection(pc1config);
+    pc2 = new mozRTCPeerConnection(pc2config);
     pc1.didSetRemote = false;
     pc2.didSetRemote = false;
     pc1.ice_queued = [];
@@ -368,13 +368,15 @@
       }
     }
 
-    pc1.ontrack = function(obj) {
-      log("pc1 got remote tracks from pc2 " + obj.type);
-      pc1video.mozSrcObject = obj.streams[0];
+    pc1.onaddstream = function(obj) {
+      log("pc1 got remote stream from pc2 " + obj.type);
+      pc1video.mozSrcObject = obj.stream;
+      //setTimeout(pc1video.play, 1000);
     }
-    pc2.ontrack = function(obj) {
-      log("pc2 got remote tracks from pc1 " + obj.type);
-      pc2video.mozSrcObject = obj.streams[0];
+    pc2.onaddstream = function(obj) {
+      log("pc2 got remote stream from pc1 " + obj.type);
+      pc2video.mozSrcObject = obj.stream;
+      //setTimeout(pc2video.play, 1000);
     }
 
     if (idp) {
@@ -393,44 +395,19 @@
         localvideo1.mozSrcObject.getAudioTracks()[0].enabled = false;
       localvideo1.play();
       pc1.addStream(video1);
-      return Promise.resolve();
-    })
-    .then(() => {
+
       if (!oneway.checked) {
-        return navigator.mediaDevices.getUserMedia(myrequest_reverse).then(function(video2) {
+        navigator.mediaDevices.getUserMedia(myrequest_reverse).then(function(video2) {
           localvideo2.mozSrcObject = video2;
           localvideo2.play();
           pc2.addStream(video2);
-          return Promise.resolve();
-        });
+          // Start the signaling.
+          pc1.createOffer(step1, failed, offer_constraints );
+        }, failed);
       } else {
-        return Promise.resolve();
+        pc1.createOffer(step1, failed, offer_constraints );
       }
-    })
-    .then(() => {
-      return pc1.createOffer(offer_constraints);
-    })
-    .then((offer) => {
-      return offerSetLocal(offer);
-    })
-    .then(() => {
-      return offerSetRemote();
-    })
-    .then(() => {
-      return createAnswer();
-    })
-    .then((answer) => {
-      return answerSetLocal(answer);
-    })
-    .then(() => {
-      return answerSetRemote();
-    })
-    .then(() => {
-      finished();
-    })
-    .catch((e) => {
-      failed(e);
-    });
+    }, failed);
   }
 
   function stop() {
