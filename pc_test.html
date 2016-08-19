@@ -293,8 +293,8 @@
     button.innerHTML = "Stop!";
     button.onclick = stop;
 
-    var pc1config = { "iceServers": [{ "urls": ["stun:stun.l.google.com:19302" ]}]};
-    var pc2config = { "iceServers": [{ "urls": ["stun:stun.l.google.com:19302" ]}]};
+    var pc1config = {};
+    var pc2config = {};
     let idp;
 
     var myrequest = { audio: true };
@@ -365,6 +365,19 @@
         }
       } else {
         log("pc1 got end-of-candidates signal");
+      }
+    }
+
+    pc1.oniceconnectionstatechange = function(obj) {
+      log("pc1 ICE connection state: " + pc1.iceConnectionState);
+      if (pc1.iceConnectionState == 'connected') {
+        log('PC1: HIP HIP HOORAY');
+      }
+    }
+    pc2.oniceconnectionstatechange = function(obj) {
+      log("pc2 ICE connection state: " + pc2.iceConnectionState);
+      if (pc2.iceConnectionState == 'connected') {
+        log('PC2: HIP HIP HOORAY');
       }
     }
 
