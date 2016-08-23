@@ -151,8 +151,9 @@
   }
 
   function failed(code) {
-    console.log(code);
-    log("Failure callback: " + JSON.stringify(code));
+    var err = code.message || code;
+    console.log(err);
+    log("Failure callback: " + JSON.stringify(err));
   }
 
   // replace CR NL with HTML breaks
