@@ -47,20 +47,21 @@
 <body>
   <div id="main">
     <h2><b>getUserMedia Test Page</b></h2>
-<a href="https://mozilla.github.com/webrtc-landing">Main webrtc demo page</a><br>
-Note: Audio will feedback unless you use a headset!<br><br>
+    <p><a href="https://mozilla.github.io/webrtc-landing">Main webrtc demo page</a></p>
     <div id="startbuttons">
       <input value="Video" onclick="startVideo();" type="button">
       <input value="Audio" onclick="startAudio();" type="button">
       <input value="Audio &amp; Video" onclick="startAudioVideo();" type="button">
-      <input value="Picture" onclick="startPicture();" type="button">
       <input value="Screen" onclick="startScreen();" type="button">
       <input value="Window" onclick="startWindow();" type="button">
       <input value="Application" onclick="startApplication();" type="button">
+      <br><input type="text" id="fps_input" value="0">
+    <label for="fps_input">FPS desired (0 for default)</label>
     </div>
     <div id="images">
        <div id="content"></div>
        <div id="frames"></div>
+       <div id="fps"></div>
     </div>
     <div id="message"></div>
     <div style="display: none;" id="stopbuttons">
@@ -82,9 +83,6 @@ Note: Audio will feedback unless you use a headset!<br><br>
   var audio = document.createElement("audio");
   audio.setAttribute("controls", true);
 
-  var picture_status = false;
-  var picture = document.createElement("img");
-
   var start = document.getElementById("startbuttons");
   var stop = document.getElementById("stopbuttons");
 
@@ -92,117 +90,151 @@ Note: Audio will feedback unless you use a headset!<br><br>
   var content = document.getElementById("content");
   var frames = document.getElementById("frames");
   var snapshot = document.getElementById("snapshot");
-  
+  var fps = document.getElementById("fps");
+
+  var fps_input = document.getElementById("fps_input");
+
   var saved_stream = null;
   var capturing = false;
+  var running = false;
 
-  function startVideo() {
-    video_status = true;
-    startMedia({video:true});
+  var fps_now = 0;
+  var fps_total = 0;
+  var last_fps_time;
+  var first_fps_time;
+  var last_fps_frames;
+  var first_fps_frames;
+  var fps_constraint;
+
+  function set_fps() {
+    if (fps_input.value == 0 &&
+        mediaConstraints.video != null) {
+      mediaConstraints.video.frameRate = null;
+	//dump("Removing frameRate\n");
+    } else if (fps_input.value > 0 &&
+	fps_input.value < 200 &&
+	mediaConstraints.video) {
+	if (!mediaConstraints.video.frameRate) {
+	    mediaConstraints.video.frameRate = {ideal: fps_input.value};
+	} else {
+	    // I assume if framerate is there ideal is
+	    mediaConstraints.video.frameRate.ideal = fps_input.value;
+	}
+      //dump("Setting framerate to " + fps_input.value + "\n");
+    }
   }
 
   function startScreen() {
     video_status = true;
     mediaConstraints = {
       video: {
-        mozMediaSource: "screen",
         mediaSource: "screen"
-      }
+      },
     };
+    set_fps();
     message.innerHTML = "<p>Note: enable media.getusermedia.screensharing.enabled in about:config</p>";
     startMedia(mediaConstraints);
   }
-  
+
   function startWindow() {
     video_status = true;
     mediaConstraints = {
       video: {
-        mozMediaSource: "window",
         mediaSource: "window"
       }
     };
+    set_fps();
     message.innerHTML = "<p>Note: enable media.getusermedia.screensharing.enabled in about:config</p>";
     startMedia(mediaConstraints);
   }
-  
+
   function startApplication() {
     video_status = true;
     mediaConstraints = {
       video: {
-        mozMediaSource: "application",
         mediaSource: "application"
       }
     };
+    set_fps();
     message.innerHTML = "<p>Note: enable media.getusermedia.screensharing.enabled in about:config</p>";
     startMedia(mediaConstraints);
   }
-  
+
   function startAudioVideo() {
     video_status = true;
     audio_status = true;
-    startMedia({video:true, audio:true});
+    mediaConstraints = {video:true, audio:true};
+    set_fps();
+    startMedia(mediaConstraints);
   }
 
   function startAudio() {
     audio_status = true;
-    startMedia({audio:true});
+    mediaConstraints = {audio:true};
+    set_fps();
+    startMedia(mediaConstraints);
   }
 
-  function startPicture() {
-    picture_status = true;
-    startMedia({picture:true});
+  function startVideo() {
+    video_status = true;
+      mediaConstraints = {video:true};
+    set_fps();
+    startMedia(mediaConstraints);
   }
 
   function stopMedia() {
     if (video_status) {
-      video.mozSrcObject.stop();
-      video.mozSrcObject = null;
+      if (video.srcObject) {
+        video.srcObject.stop();
+      }
+      video.srcObject.stop();
+      video.srcObject = null;
       content.removeChild(video);
+      fps.innerHTML = "";
       stopbuttons.removeChild(snapshot);
       snapshot.value = "Snapshot";
       frames.innerHTML = '';
       capturing = false;
       video_status = false;
     } else if (audio_status) {
-      audio.mozSrcObject.stop();
-      audio.mozSrcObject = null;
+      if (audio.srcObject) {
+        audio.srcObject.stop();
+      }
+      audio.srcObject = null;
       content.removeChild(audio);
       audio_status = false;
-    } else if (picture_status) {
-      picture.mozSrcObject = null;
-      content.removeChild(picture);
-      picture_status = false;
     }
     saved_stream = null;
     stop.style.display = "none";
     start.style.display = "block";
+    running = false;
   }
 
   function pauseMedia() {
     if (saved_stream) {
       if (video_status) {
-        video.mozSrcObject = saved_stream;
+        video.srcObject = saved_stream;
         video.play();
       } else if (audio_status) {
-        audio.mozSrcObject = saved_stream;
+        audio.srcObject = saved_stream;
         audio.play();
       }
       saved_stream = null;
     } else {
       if (video_status) {
         video.pause();
-        saved_stream = video.mozSrcObject;
-        video.mozSrcObject = null;
+        saved_stream = video.srcObject;
+        video.srcObject = null;
       } else if (audio_status) {
         audio.pause();
-        saved_stream = audio.mozSrcObject;
-        audio.mozSrcObject = null;
+        saved_stream = audio.srcObject;
+        audio.srcObject = null;
       }
     }
   }
 
   function getusermedia_error(err, params) {
-    if (params.video.mediaSource) {
+    if (params.video && params.video.mediaSource) {
       if (location.protocol != "https:") {
         message.innerHTML = "<p class='error'>" + err + "</p>" +
           "<p>Screen/window sharing now requires the site be loaded from an https: URL</p>" +
@@ -224,29 +256,41 @@ Note: Audio will feedback unless you use a headset!<br><br>
   function startMedia(param) {
     stop.style.display = "block";
     start.style.display = "none";
-    try {
-      window.navigator.mozGetUserMedia(param, function(stream) {
+    var p = navigator.mediaDevices.getUserMedia(param)
+      .then(function(stream) {
         message.innerHTML = "<p>Success!</p>";
         if (video_status) {
           content.appendChild(video);
-          video.mozSrcObject = stream;
+          video.srcObject = stream;
+          video.muted = true;
           video.play();
           frames.innerHTML = '';
           stopbuttons.appendChild(snapshot);
+          first_fps_time = last_fps_time = new Date();
+          first_fps_frames = last_fps_frames = video.mozPaintedFrames;
+          fps.innerHTML="FPS now:  0.0 , entire capture:  0.0";
+          setTimeout(get_fps, 2000);
         } else if (audio_status) {
           content.appendChild(audio);
-          audio.mozSrcObject = stream;
+          audio.srcObject = stream;
           audio.play();
-        } else if (picture_status) {
-          content.appendChild(picture);
-          picture.src = window.URL.createObjectURL(stream);
-          picture.onload = function(e) {
-            window.URL.revokeObjectURL(this.src);
-          }
         }
-      }, function (err) { getusermedia_error(err, param); });
-    } catch(e) {
-      getusermedia_error(e, param);
+        running = true;
+      })
+    .catch(function (err) { getusermedia_error(err, param); });
+  }
+
+  function get_fps() {
+    if (running) {
+      var now = new Date();
+      var frames = video.mozPaintedFrames;
+      fps_now =   (frames - last_fps_frames)/((now - last_fps_time)/1000);
+      fps_total = (frames - first_fps_frames)/((now - first_fps_time)/1000);
+      fps.innerHTML="FPS now: " + fps_now.toFixed(1) + " , entire capture: " + fps_total.toFixed(1);
+      //dump("FPS: " + fps_now + ", entire capture: " + fps_total + "\n");
+      last_fps_time = now;
+      last_fps_frames = frames;
+      setTimeout(get_fps, 1000);
     }
   }
 
@@ -272,7 +316,7 @@ Note: Audio will feedback unless you use a headset!<br><br>
       if (snapshots.unshift(canvas) > 4)
         snapshots.length = 4;
       frames.innerHTML = '';
-      for(var i=0; i<snapshots.length; i++) {
+      for(var i=0; i < snapshots.length; i++) {
         frames.appendChild(snapshots[i]);
       }
 

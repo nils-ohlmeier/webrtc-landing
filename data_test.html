@@ -17,6 +17,8 @@
      <input type="number" id="stream_num" value="5">
      <input type="checkbox" id="unordered" value="Use unordered data transfer">
      <label for="unordered">Use unordered data transfer</label>
+     <button id="throughput" onClick="TestSpeed();">Throughput Test</button>
+     <label for="throughput">Test throughput</label>
 </div><br/></td></tr>
 <tr><td><form id="pc1_form" action="javascript:sendit(1)">
 <div>pc1 says: <input id="pc1_input" type="text" value="type here" onKeyPress="return submitenter(this,event)"/>
@@ -63,6 +65,8 @@
   let pc2_answer;
   let iter = 0;
   let iter2 = 0;
+
+  var testDataChannelInterval;
 
   function log(msg) {
     let div = document.getElementById("datawindow");
@@ -151,7 +155,9 @@
         if (evt.data instanceof Blob) {
           fancy_log("*** pc1 sent Blob: " + evt.data + ", length=" + evt.data.size,"red");
         } else {
-          fancy_log("pc1 said: " + evt.data,"red");
+	  if (!testDataChannelInterval) {
+              fancy_log("pc1 said: " + evt.data,"red");
+	  }
         }
       };
       mychannel.onopen = function() {
@@ -160,7 +166,16 @@
       };
       mychannel.onclose = function() {
         log("*** pc2 onclose fired");
+	if (testDataChannelInterval) {
+            clearInterval(testDataChannelInterval);
+            testDataChannelInterval = null;
+	}     
       };
+      mychannel.onbufferedamountlow = function() {
+        log("*** bufferedAmountLow went below " + mychannel.bufferAmountLowThreshold +
+	    " (currently " + mychannel.bufferedAmount + ")");
+      };
+      mychannel.bufferedAmountLowThreshold = 1024*1024;
     };
     pc2.onclosedconnection = function() {
       log("pc2 onClosedConnection ");
@@ -269,7 +284,9 @@ function start() {
         if (evt.data instanceof Blob) {
           fancy_log("*** pc2 sent Blob: " + evt.data + ", length=" + evt.data.size,"blue");
         } else {
-          fancy_log('pc2 said: ' + evt.data,"blue");
+	  if (!testDataChannelInterval) {
+              fancy_log('pc2 said: ' + evt.data,"blue");
+	  }
         }
       }
 
@@ -280,7 +297,16 @@ function start() {
       }
       mychannel.onclose = function() {
         log("pc1 onclose fired");
+	if (testDataChannelInterval) {
+            clearInterval(testDataChannelInterval);
+            testDataChannelInterval = null;
+	}            
       };
+      mychannel.onbufferedamountlow = function() {
+        log("*** bufferedAmountLow went below " + mychannel.bufferAmountLowThreshold +
+	    " (currently " + mychannel.bufferedAmount + ")");
+      };
+      mychannel.bufferedAmountLowThreshold = 1024*1024;
     }
     pc1.onclosedconnection = function() {
       log("pc1 onClosedConnection ");
@@ -298,7 +324,9 @@ function start() {
       if (evt.data instanceof Blob) {
         fancy_log("*** pc2 sent Blob: " + evt.data + ", length=" + evt.data.size,"blue");
       } else {
-          fancy_log('pc2 said: ' + evt.data,"blue");
+	if (!testDataChannelInterval) {
+            fancy_log('pc2 said: ' + evt.data,"blue");
+	}
       }
     }
     dc1.onopen = function() {
@@ -316,7 +344,17 @@ function start() {
     }
     dc1.onclose = function() {
       log("pc1 onclose fired");
+      if (testDataChannelInterval) {
+          clearInterval(testDataChannelInterval);
+          testDataChannelInterval = null;
+      }            
     };
+
+    dc1.onbufferedamountlow = function() {
+      log("*** bufferedAmountLow went below " + dc1.bufferAmountLowThreshold +
+	  " (currently " + dc1.bufferedAmount + ")");
+    };
+    dc1.bufferedAmountLowThreshold = 1024*1024;
 
     pc1.createOffer(step1, failed);
   }
@@ -328,6 +366,46 @@ function start() {
 
     button.innerHTML = "Start!";
     button.onclick = start;
+  }
+
+function TestSpeed() {
+    if (!testDataChannelInterval) {
+	TestThroughput(dc1, 200000);
+    } else {
+        clearInterval(testDataChannelInterval);
+        testDataChannelInterval = null;
+    }
+  }
+
+  function TestThroughput(channel, size) {
+      if (channel) {
+          var amountSent = 0;
+          var startTime = new Date().getTime();
+          var rate = 0;
+          var msg = "";
+          for(var i = 0; i < size; ++i) {
+              msg += "A";
+          }
+          var index = 0;
+          
+          testDataChannelInterval = setInterval(
+              function () {
+                  //var currentTime = new Date().getTime();
+                  var tmp = index + ": " + msg;
+                  index++;
+                  
+                  channel.send(tmp);
+                  amountSent += tmp.length;
+                  //rate = amountSent / (currentTime - startTime);
+		  if (index % 500 == 0) {
+		      var currentTime = new Date().getTime();
+		      rate = amountSent / (currentTime - startTime);
+		      log("Current throughput: " + rate);
+                      dump("Current throughput: " + rate + "\n");
+		  }
+              },
+              2);
+      }
   }
 </script>
 
