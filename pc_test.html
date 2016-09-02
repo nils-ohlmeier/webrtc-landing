@@ -45,6 +45,8 @@
 <label for="oneway">One-way call</label>
 <input type="checkbox" id="audio_only" value="Audio-only call">
 <label for="audio_only">Audio-only call</label>
+<input type="checkbox" id="video_only" value="Video-only call">
+<label for="video_only">Video-only call</label>
 <input type="checkbox" id="disable_video" value="Disable video" onclick="disable_media(pc1, 1, 0);">
 <label for="disable_video">Disable video</label>
 <input type="checkbox" id="disable_audio" value="Disable audio" onclick="disable_media(pc1, 0, 0);">
@@ -53,13 +55,15 @@
 <label for="requireh264">Require H.264 video</label>
 <input type="checkbox" id="requireg722" value="Require G.722">
 <label for="requireg722">Require G.722 audio</label>
+<input type="text" id="video_constraints" value="Video constraints">
+<label for="video_constraints">Video Constraints</label>
 <div id="divH264" class="hidden">
   <br>
   <input type="checkbox" id="prefermode0" value="Prefer Mode 0">
   <label for="prefermode0">Prefer H.264 Mode 0</label>
 </div>
 <div id="idpDetails">
-  <input type="checkbox" id="idp" value="Require G.722">
+  <input type="checkbox" id="idp" value="IDP enable">
   <label for="idp">Enable Identity Provider</label>:
   <label for="idpdomain">Domain</label>
   <input type="text" id="idpdomain" value="martinthomson.github.io">
@@ -108,6 +112,8 @@
   oneway.checked = false;
   let audio_only = document.getElementById("audio_only");
   audio_only.checked = false;
+  let video_only = document.getElementById("video_only");
+  video_only.checked = false;
   let video_disable = document.getElementById("disable_video");
   let audio_disable = document.getElementById("disable_audio");
   let requireh264 = document.getElementById("requireh264");
@@ -118,6 +124,7 @@
   requireg722.checked = false;
   let idpenabled = document.getElementById("idp");
   idpenabled.checked = true;
+  let video_constraints = document.getElementById("video_constraints");
 
   let pc1;
   let pc2;
@@ -302,7 +309,11 @@
 
     var myrequest = { audio: true };
     if (!(audio_only.checked)) {
-      myrequest = { audio: true, video: true };
+      if (!(video_only.checked)) {
+        myrequest = { audio: true, video: true /* { width: 1920, height: 1080 }*/ };
+      } else {
+       myrequest = { audio: false, video: true /* { width: 1920, height: 1080 }*/ };
+      }
     }
 
     myrequest_reverse = copy_dictionary(myrequest);
