@@ -47,6 +47,7 @@
 <label for="audio_only">Audio-only call</label>
 <input type="checkbox" id="video_only" value="Video-only call">
 <label for="video_only">Video-only call</label>
+<br>    
 <input type="checkbox" id="disable_video" value="Disable video" onclick="disable_media(pc1, 1, 0);">
 <label for="disable_video">Disable video</label>
 <input type="checkbox" id="disable_audio" value="Disable audio" onclick="disable_media(pc1, 0, 0);">
@@ -55,8 +56,9 @@
 <label for="requireh264">Require H.264 video</label>
 <input type="checkbox" id="requireg722" value="Require G.722">
 <label for="requireg722">Require G.722 audio</label>
-<input type="text" id="video_constraints" value="Video constraints">
-<label for="video_constraints">Video Constraints</label>
+<br>
+<input type="text" id="video_constraints" value="">
+<label for="video_constraints">Video Constraints in JSON (use quotes!)</label>
 <div id="divH264" class="hidden">
   <br>
   <input type="checkbox" id="prefermode0" value="Prefer Mode 0">
@@ -307,13 +309,26 @@
     var pc2config = {};
     let idp;
 
-    var myrequest = { audio: true };
+    var myrequest = {};
     if (!(audio_only.checked)) {
-      if (!(video_only.checked)) {
-        myrequest = { audio: true, video: true /* { width: 1920, height: 1080 }*/ };
-      } else {
-       myrequest = { audio: false, video: true /* { width: 1920, height: 1080 }*/ };
+      myrequest.audio = true;
+    } else {
+      myrequest.audo = false;
+    }
+    if (!(video_only.checked)) {
+      myrequest.video = true;
+    } else {
+      myrequest.video = false;
+    }
+    log("Parsing JSON:" + video_constraints.value);
+    if (myrequest.video && video_constraints.value) {
+      try {  
+        myrequest.video = JSON.parse(video_constraints.value);
+      } catch(e) {
+        log("Couldn't parse JSON (" + e + ") value: " + video_constraints.value);
+	myrequest.video = true;
       }
+      log("Using contraints: " + JSON.stringify(myrequest));
     }
 
     myrequest_reverse = copy_dictionary(myrequest);
