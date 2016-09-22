@@ -310,15 +310,15 @@
     let idp;
 
     var myrequest = {};
-    if (!(audio_only.checked)) {
-      myrequest.audio = true;
-    } else {
-      myrequest.audo = false;
-    }
-    if (!(video_only.checked)) {
-      myrequest.video = true;
-    } else {
+    if (audio_only.checked) {
       myrequest.video = false;
+    } else {
+      myrequest.video = true;
+    }
+    if (video_only.checked) {
+      myrequest.audio = false;
+    } else {
+      myrequest.audio = true;
     }
     log("Parsing JSON:" + video_constraints.value);
     if (myrequest.video && video_constraints.value) {
