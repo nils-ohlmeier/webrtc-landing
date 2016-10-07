@@ -183,15 +183,21 @@
   // Also remove mode 0 if it's offered
   // Note, we don't bother removing the fmtp lines, which makes a good test
   // for some SDP parsing issues.
-  function removeVP8(sdp) {
+  function removeAllButH264(sdp) {
     updated_sdp = sdp.replace("a=rtpmap:120 VP8/90000\r\n","");
-    updated_sdp = updated_sdp.replace(/m=video ([0-9]+) RTP\/SAVPF ([0-9 ]*) 120/g, "m=video $1 RTP\/SAVPF $2");
-    updated_sdp = updated_sdp.replace(/m=video ([0-9]+) RTP\/SAVPF 120([0-9 ]*)/g, "m=video $1 RTP\/SAVPF$2");
+    updated_sdp = updated_sdp.replace("a=rtpmap:121 VP9/90000\r\n","");
     updated_sdp = updated_sdp.replace(/m=video ([0-9]+) UDP\/TLS\/RTP\/SAVPF ([0-9 ]*) 120/g, "m=video $1  UDP\/TLS\/RTP\/SAVPF $2");
     updated_sdp = updated_sdp.replace(/m=video ([0-9]+) UDP\/TLS\/RTP\/SAVPF 120([0-9 ]*)/g, "m=video $1 UDP\/TLS\/RTP\/SAVPF$2");
+    updated_sdp = updated_sdp.replace(/m=video ([0-9]+) UDP\/TLS\/RTP\/SAVPF ([0-9 ]*) 121/g, "m=video $1  UDP\/TLS\/RTP\/SAVPF $2");
+    updated_sdp = updated_sdp.replace(/m=video ([0-9]+) UDP\/TLS\/RTP\/SAVPF 121([0-9 ]*)/g, "m=video $1 UDP\/TLS\/RTP\/SAVPF$2");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:120 goog-remb\r\n","");
     updated_sdp = updated_sdp.replace("a=rtcp-fb:120 nack\r\n","");
     updated_sdp = updated_sdp.replace("a=rtcp-fb:120 nack pli\r\n","");
     updated_sdp = updated_sdp.replace("a=rtcp-fb:120 ccm fir\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:121 goog-remb\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:121 nack\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:121 nack pli\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:121 ccm fir\r\n","");
     return updated_sdp;
   }
 
@@ -214,12 +220,12 @@
 
     if (requireh264.checked) {
       // to enforce the usage of H264 we remove the VP8 codec from the offer
-      offer.sdp = removeVP8(offer.sdp);
+      offer.sdp = removeAllButH264(offer.sdp);
       if (prefermode0.checked) {
         offer.sdp = preferMode0(offer.sdp);
       }
       pc1_offer = offer;
-      log("No VP8 Offer: " + sdpPrettyPrint(offer.sdp));
+      log("H264-only Offer: " + sdpPrettyPrint(offer.sdp));
 
       if (!offer.sdp.match(/a=rtpmap:[0-9]+ H264/g)) {
         log("No H264 found in the offer!!!");
