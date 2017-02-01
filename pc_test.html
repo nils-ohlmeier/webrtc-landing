@@ -388,6 +388,9 @@
                              offerToReceiveAudio: false };
        answer_constraints = { offerToReceiveVideo: true,
                               offerToReceiveAudio: true };
+    } else {
+       offer_constraints = null;
+       answer_constraints = null;
     }
 
     if (idpenabled.checked) {
