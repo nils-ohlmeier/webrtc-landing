@@ -60,6 +60,7 @@
     </div>
     <div id="images">
        <div id="content"></div>
+       <div id="controls"></div>
        <div id="frames"></div>
        <div id="fps"></div>
     </div>
@@ -76,6 +77,15 @@
   var video = document.createElement("video");
   video.setAttribute("width", 640);
   video.setAttribute("height", 480);
+
+  var muted = document.createElement("input");
+  muted.type = "checkbox";
+  muted.checked = true;
+  muted.onclick = function() { video.muted = muted.checked; };
+
+  var mute = document.createElement("label");
+  mute.innerHTML = "Muted";
+  mute.insertBefore(muted, mute.firstChild);
 
   var snapshots = [];
 
@@ -187,9 +197,9 @@
       if (video.srcObject) {
         video.srcObject.stop();
       }
-      video.srcObject.stop();
       video.srcObject = null;
       content.removeChild(video);
+      controls.removeChild(mute);
       fps.innerHTML = "";
       stopbuttons.removeChild(snapshot);
       snapshot.value = "Snapshot";
@@ -261,8 +271,11 @@
         message.innerHTML = "<p>Success!</p>";
         if (video_status) {
           content.appendChild(video);
+          if (audio_status) {
+            controls.appendChild(mute);
+            video.muted = muted.checked;
+          }
           video.srcObject = stream;
-          video.muted = true;
           video.play();
           frames.innerHTML = '';
           stopbuttons.appendChild(snapshot);
