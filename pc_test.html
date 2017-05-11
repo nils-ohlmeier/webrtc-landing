@@ -56,9 +56,13 @@
 <label for="requireh264">Require H.264 video</label>
 <input type="checkbox" id="requirevp9" value="Require VP9">
 <label for="requirevp9">Require VP9 video</label>
+<input type="checkbox" id="requirevp8" value="Require VP8">
+<label for="requirevp8">Require VP8 video</label>
 <input type="checkbox" id="requireg722" value="Require G.722">
 <label for="requireg722">Require G.722 audio</label>
 <br>
+<input type="number" id="tias" value="TIAS setting">
+<label for="tias">TIAS for video</label>
 <input type="text" id="video_constraints" value="">
 <label for="video_constraints">Video Constraints in JSON (use quotes!)</label>
 <div id="divH264" class="hidden">
@@ -124,6 +128,8 @@
   requireh264.checked = false;
   let requirevp9 = document.getElementById("requirevp9");
   requirevp9.checked = false;
+  let requirevp8 = document.getElementById("requirevp8");
+  requirevp8.checked = false;
   let prefermode0 = document.getElementById("prefermode0");
   prefermode0.checked = false;
   let requireg722 = document.getElementById("requireg722");
@@ -131,6 +137,8 @@
   let idpenabled = document.getElementById("idp");
   idpenabled.checked = true;
   let video_constraints = document.getElementById("video_constraints");
+  let tias = document.getElementById("tias");
+  tias.value = 0;
 
   let pc1;
   let pc2;
@@ -184,6 +192,8 @@
     }
   }
 
+  // XXX write function removeAllBut(sdp, payload) and delete these
+
   // Also remove mode 0 if it's offered
   // Note, we don't bother removing the fmtp lines, which makes a good test
   // for some SDP parsing issues.
@@ -230,6 +240,31 @@
     return updated_sdp;
   }
 
+  function removeAllButVP8(sdp) {
+    updated_sdp = sdp.replace("a=rtpmap:121 VP9/90000\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtpmap:126 H264/90000\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtpmap:97 H264/90000\r\n","");
+    updated_sdp = updated_sdp.replace(/m=video ([0-9]+) UDP\/TLS\/RTP\/SAVPF ([0-9 ]*) 121/g, "m=video $1  UDP\/TLS\/RTP\/SAVPF $2");
+    updated_sdp = updated_sdp.replace(/m=video ([0-9]+) UDP\/TLS\/RTP\/SAVPF 120([0-9 ]*)/g, "m=video $1 UDP\/TLS\/RTP\/SAVPF$2");
+    updated_sdp = updated_sdp.replace(/m=video ([0-9]+) UDP\/TLS\/RTP\/SAVPF ([0-9 ]*) 126/g, "m=video $1  UDP\/TLS\/RTP\/SAVPF $2");
+    updated_sdp = updated_sdp.replace(/m=video ([0-9]+) UDP\/TLS\/RTP\/SAVPF 126([0-9 ]*)/g, "m=video $1 UDP\/TLS\/RTP\/SAVPF$2");
+    updated_sdp = updated_sdp.replace(/m=video ([0-9]+) UDP\/TLS\/RTP\/SAVPF ([0-9 ]*) 97/g, "m=video $1  UDP\/TLS\/RTP\/SAVPF $2");
+    updated_sdp = updated_sdp.replace(/m=video ([0-9]+) UDP\/TLS\/RTP\/SAVPF 97([0-9 ]*)/g, "m=video $1 UDP\/TLS\/RTP\/SAVPF$2");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:121 goog-remb\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:121 nack\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:121 nack pli\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:121 ccm fir\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:126 goog-remb\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:126 nack\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:126 nack pli\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:126 ccm fir\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:97 goog-remb\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:97 nack\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:97 nack pli\r\n","");
+    updated_sdp = updated_sdp.replace("a=rtcp-fb:97 ccm fir\r\n","");
+    return updated_sdp;
+  }
+
 
   // Remove anything that's not G.722 from the m=audio line
   function removeNonG722(sdp) {
@@ -243,6 +278,12 @@
     return updated_sdp;
   }
 
+  function addTIAS(sdp, value) {
+      updated_sdp = sdp.replace(/m=video (.*)\r\n/g,
+				"m=video $1\r\nb=TIAS:" + value + "\r\n");
+      return updated_sdp;
+  }
+
   // pc1.createOffer finished, call pc1.setLocal
   function offerSetLocal(offer) {
     log("Offer:  " + sdpPrettyPrint(offer.sdp));
@@ -252,10 +293,18 @@
       // to enforce the usage of vp9 we remove the VP8 & H264 codecs from the offer
       offer.sdp = removeAllButVP9(offer.sdp);
       pc1_offer = offer;
-      log("VP9-only Offer: " + sdpPrettyPrint(offer.sdp));
 
       if (!offer.sdp.match(/a=rtpmap:[0-9]+ VP9/g)) {
         log("No VP9 found in the offer!!!");
+        return Promise.reject();
+      }
+    } else if (requirevp8.checked) {
+      // to enforce the usage of vp8 we remove the VP9 & H264 codecs from the offer
+      offer.sdp = removeAllButVP8(offer.sdp);
+      pc1_offer = offer;
+
+      if (!offer.sdp.match(/a=rtpmap:[0-9]+ VP8/g)) {
+        log("No VP8 found in the offer!!!");
         return Promise.reject();
       }
     } else if (requireh264.checked) {
@@ -265,7 +314,6 @@
         offer.sdp = preferMode0(offer.sdp);
       }
       pc1_offer = offer;
-      log("H264-only Offer: " + sdpPrettyPrint(offer.sdp));
 
       if (!offer.sdp.match(/a=rtpmap:[0-9]+ H264/g)) {
         log("No H264 found in the offer!!!");
@@ -276,13 +324,17 @@
       // to enforce the usage of G.722 we remove other codecs from the offer
       offer.sdp = removeNonG722(offer.sdp);
       pc1_offer = offer;
-      log("G.722 only Offer: " + sdpPrettyPrint(offer.sdp));
 
       if (!offer.sdp.match(/a=rtpmap:[0-9]+ G722/g)) {
         log("No G722 found in the offer!!!");
         return Promise.reject();
       }
     }
+    if (tias.value != 0) {
+      offer.sdp = addTIAS(offer.sdp, tias.value)
+      pc1_offer = offer;
+    }
+    log("Final Offer:  " + sdpPrettyPrint(offer.sdp));
     return pc1.setLocalDescription(offer);
   }
 
