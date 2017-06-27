@@ -90,8 +90,8 @@
     button.innerHTML = "Stop!";
     button.onclick = stop;
 
-    pc1 = new mozRTCPeerConnection();
-    pc2 = new mozRTCPeerConnection();
+    pc1 = new RTCPeerConnection();
+    pc2 = new RTCPeerConnection();
 
     pc1.onaddstream = function(obj) {
       log("pc1 got remote stream from pc2 " + obj.type);
@@ -104,13 +104,13 @@
       pc1audio.play();
     }
 
-    navigator.mozGetUserMedia({audio:true}, function(audio1) {
+    navigator.mediaDevices.getUserMedia({audio:true}, function(audio1) {
       // Add stream obtained from gUM to <audio> to start media flow.
       localaudio.mozSrcObject = audio1;
       localaudio.play();
       pc1.addStream(audio1);
 
-      navigator.mozGetUserMedia({audio:true, fake:true}, function(audio2) {
+      navigator.mediaDevices.getUserMedia({audio:true, fake:true}, function(audio2) {
         pc2.addStream(audio2);
         // Start the signaling.
         pc1.createOffer(step1, failed);

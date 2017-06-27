@@ -125,7 +125,7 @@ Note: Audio will feedback unless you use a headset!<br><br>
 
   function startMedia(front, param) {
     try {
-      window.navigator.mozGetUserMedia(param, function(stream) {
+      window.navigator.mediaDevices.getUserMedia(param, function(stream) {
         message.innerHTML = "<p>Success!</p>";
         if (video_status) {
           element = front ? video : video2;

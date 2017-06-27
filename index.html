@@ -20,7 +20,7 @@
   <div class="row">
   <div id="gum" class="span12 offset2 alert alert-error fade in" style="display: none;">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
-    <h4>mozGetUserMedia is missing!</h4>
+    <h4>GetUserMedia is missing!</h4>
     Do you have the latest <a href="http://nightly.mozilla.org/">Nightly</a> and set <i>media.navigator.enabled</i> to true?
   </div>
   </div>
@@ -28,7 +28,7 @@
   <div class="row">
   <div id="pc" class="span12 offset2 alert alert-error" style="display: none;">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
-    <h4>mozRTCPeerConnection is missing!</h4>
+    <h4>RTCPeerConnection is missing!</h4>
     Do you have the latest <a href="http://nightly.mozilla.org/">Nightly</a> and set <i>media.peerconnection.enabled</i> to true?
   </div>
   </div>
@@ -54,7 +54,7 @@
       <div class="span3">
       <div class="well">
         <h3>Single host 'chat'</h3>
-        <p>Single host 'chat' via mozRTCPeerConnection.</p>
+        <p>Single host 'chat' via RTCPeerConnection.</p>
         <p><a class="btn btn-large" href="pc_test.html">Try Demo</a></p>
       </div>
       </div>
@@ -116,10 +116,10 @@
 -->
 
   <script>
-    if (!navigator.mozGetUserMedia) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       document.getElementById("gum").style.display = "block";
     }
-    if (!window.mozRTCPeerConnection) {
+    if (!window.RTCPeerConnection) {
       document.getElementById("pc").style.display = "block";
     }
     if (BrowserDetect.browser != "Firefox" ||

@@ -103,15 +103,15 @@ Note: Audio will feedback unless you use a headset!<br><br>
 
   window.URL = window.URL || window.webkitURL;
 
-  if (navigator.mozGetUserMedia) {
+  if (navigator.mediaDevices.getUserMedia) {
     console.log("This appears to be Firefox");
 
     // The RTCPeerConnection object.
-    RTCPeerConnection = mozRTCPeerConnection;
+    RTCPeerConnection = RTCPeerConnection;
 
     // Get UserMedia (only difference is the prefix).
     // Code from Adam Barth.
-    getUserMedia = navigator.mozGetUserMedia.bind(navigator);
+    getUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator);
 
     // Attach a media stream to an element.
     attachMediaStream = function(element, stream) {

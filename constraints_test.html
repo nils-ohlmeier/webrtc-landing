@@ -95,8 +95,8 @@
     button.innerHTML = "Stop!";
     button.onclick = stop;
 
-    pc1 = new mozRTCPeerConnection();
-    pc2 = new mozRTCPeerConnection();
+    pc1 = new RTCPeerConnection();
+    pc2 = new RTCPeerConnection();
 
     pc1.onaddstream = function(obj) {
       log("pc1 got remote stream from pc2 " + obj.type);
@@ -109,17 +109,17 @@
       pc1video.play();
     }
 
-    navigator.mozGetUserMedia({video:true}, function(video1) {
+    navigator.mediaDevices.getUserMedia({video:true}, function(video1) {
       // Add stream obtained from gUM to <video> to start media flow.
       localvideo.mozSrcObject = video1;
       localvideo.play();
       pc1.addStream(video1);
 
-      navigator.mozGetUserMedia({audio:true, fake:true}, function(audio1) {
+      navigator.mediaDevices.getUserMedia({audio:true, fake:true}, function(audio1) {
         pc1.addStream(audio1);
         pc2.addStream(audio1);
 
-        navigator.mozGetUserMedia({video:true, fake:true}, function(video2) {
+        navigator.mediaDevices.getUserMedia({video:true, fake:true}, function(video2) {
           pc2.addStream(video2);
           // Start the signaling.
           pc1.createOffer(step1, failed, {

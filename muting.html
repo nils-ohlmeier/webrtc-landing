@@ -1,6 +1,6 @@
 <html><head>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
-  <title>Simple mozRTCPeerConnection Video Test</title>
+  <title>Simple RTCPeerConnection Video Test</title>
   <style>
     #player1 {
       position:relative;
@@ -30,7 +30,7 @@
 </head>
 <body>
 
-<h1>Simple mozRTCPeerConnection Video Test</h1>
+<h1>Simple RTCPeerConnection Video Test</h1>
 
 <div>
 <button id="tehbutton" onclick="start();">Start!</button>
@@ -163,8 +163,8 @@
     button.innerHTML = "Stop!";
     button.onclick = stop;
 
-    pc1 = new mozRTCPeerConnection();
-    pc2 = new mozRTCPeerConnection();
+    pc1 = new RTCPeerConnection();
+    pc2 = new RTCPeerConnection();
 
     pc1.onaddstream = function(obj) {
       log("pc1 got remote stream from pc2 " + obj.type);
@@ -185,7 +185,7 @@
     } else {
       myrequest = {video: true, audio:true};
     }
-    navigator.mozGetUserMedia({video:true, audio:true}, function(video1) {
+    navigator.mediaDevices.getUserMedia({video:true, audio:true}, function(video1) {
       // Add stream obtained from gUM to <video> to start media flow.
       localvideo1.mozSrcObject = video1;
       if (video_disable.checked)
@@ -195,7 +195,7 @@
       localvideo1.play();
       pc1.addStream(video1);
 
-      navigator.mozGetUserMedia(myrequest, function(video2) {
+      navigator.mediaDevices.getUserMedia(myrequest, function(video2) {
         localvideo2.mozSrcObject = video2;
         localvideo2.play();
         pc2.addStream(video2);

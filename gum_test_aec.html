@@ -198,7 +198,7 @@ Note: Audio will feedback unless you use a headset!<br><br>
     stop.style.display = "block";
     start.style.display = "none";
     try {
-      window.navigator.mozGetUserMedia(param, function(stream) {
+      window.navigator.mediaDevices.getUserMedia(param, function(stream) {
         message.innerHTML = "<p>Success!</p>";
         if (video_status) {
           content.appendChild(video);

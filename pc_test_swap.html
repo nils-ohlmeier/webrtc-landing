@@ -1,6 +1,6 @@
 <html><head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-  <title>Simple mozRTCPeerConnection Video Test</title>
+  <title>Simple RTCPeerConnection Video Test</title>
   <style>
     #player1 {
       position:relative;
@@ -166,7 +166,7 @@ Ugly proof-of-concept.  Ignore the disabled portions of pc_test lying around.
       old_video = null;
       fake_stream.getVideoTracks()[0].enabled = false;
       log("Disabled fake");
-      navigator.mozGetUserMedia({ video: { facingMode: (swapped? "environment" : "user") } },
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: (swapped? "environment" : "user") } },
         function(stream) {
           new_stream = stream;
           localvideo1.mozSrcObject = stream;
@@ -307,8 +307,8 @@ Ugly proof-of-concept.  Ignore the disabled portions of pc_test lying around.
     button.innerHTML = "Stop!";
     button.onclick = stop;
 
-    pc1 = new mozRTCPeerConnection();
-    pc2 = new mozRTCPeerConnection();
+    pc1 = new RTCPeerConnection();
+    pc2 = new RTCPeerConnection();
     pc1.didSetRemote = false;
     pc2.didSetRemote = false;
     pc1.ice_queued = [];
@@ -365,10 +365,10 @@ Ugly proof-of-concept.  Ignore the disabled portions of pc_test lying around.
                                             OfferToReceiveAudio: true } };
     }
 
-    navigator.mozGetUserMedia({ fake:true, audio: true, video: true },
+    navigator.mediaDevices.getUserMedia({ fake:true, audio: true, video: true },
                               function(stream) {
     fake_stream = stream;
-    navigator.mozGetUserMedia(myrequest, function(video1) {
+    navigator.mediaDevices.getUserMedia(myrequest, function(video1) {
       // Add stream obtained from gUM to <video> to start media flow.
       localvideo1.mozSrcObject = video1;
       real_stream = video1;
@@ -383,7 +383,7 @@ Ugly proof-of-concept.  Ignore the disabled portions of pc_test lying around.
       //pc1.addStream(video1);
 
       if (!oneway.checked) {
-        navigator.mozGetUserMedia(myrequest_reverse, function(video2) {
+        navigator.mediaDevices.getUserMedia(myrequest_reverse, function(video2) {
           localvideo2.mozSrcObject = video2;
           localvideo2.play();
           video2.getTracks().forEach(function(track) {
