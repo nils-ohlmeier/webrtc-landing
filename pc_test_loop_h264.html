@@ -385,12 +385,12 @@
   }
 
   function stop() {
-    pc1.close();
-    pc2.close();
+    if (rounds < 50) {
+      pc1.close();
+      pc2.close();
 
-    rounds += 1;
+      rounds += 1;
 
-    if (rounds < 30) {
         start();
     }
   }
