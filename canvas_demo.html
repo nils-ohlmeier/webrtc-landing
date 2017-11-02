@@ -197,7 +197,7 @@
 
     pc2.onaddstream = function(obj) {
       log("pc2 got remote stream from pc1 " + obj.type);
-      pc2video.mozSrcObject = obj.stream;
+      pc2video.srcObject = obj.stream;
     }
 
     if (!canvas1.captureStream) {
@@ -221,7 +221,7 @@
   function stop() {
     $('#mycanvas1').hide();
     pc2video.pause();
-    pc2video.mozSrcObject = null;
+    pc2video.srcObject = null;
     canvas_stream.getTracks().forEach(function(track) {
       track.stop();
     });
