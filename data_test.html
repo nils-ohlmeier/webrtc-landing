@@ -12,6 +12,7 @@
 </td></tr>
 <tr><td><div>
      <button id="thebutton" onClick="start();">Start!</button>
+     <button id="closechan" onClick="stopchannel();">Stop Channel</button>
      <input type="checkbox" id="preset" value="Use pre-negotiated channel 5">
      <label for="preset">Use pre-negotiated channel</label>
      <input type="number" id="stream_num" value="5">
@@ -357,6 +358,12 @@ function start() {
     dc1.bufferedAmountLowThreshold = 1024*1024;
 
     pc1.createOffer(step1, failed);
+  }
+
+  function stopchannel() {
+    log("close one channel");
+    dc1.close();
+    // dc2.close();
   }
 
   function stop() {

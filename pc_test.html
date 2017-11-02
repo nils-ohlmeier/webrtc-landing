@@ -85,10 +85,10 @@
 </div><br>
 <div>
 <div id="player1">
-<video tabindex="0" id="pc1video" class="mainvideo" controls="controls" height="480" width="640" muted autoplay></video>
+<video tabindex="0" id="pc1video" class="mainvideo" controls="controls" height="480" width="640" muted></video>
 <video tabindex="0" id="localvideo1" controls="controls" height="120" width="160" muted></video></div>
 <div id="player2">
-<video tabindex="0" id="pc2video" class="mainvideo" controls="controls" height="480" width="640" muted autoplay></video>
+<video tabindex="0" id="pc2video" class="mainvideo" controls="controls" height="480" width="640" muted></video>
 <video tabindex="0" id="localvideo2" controls="controls" height="120" width="160" muted></video></div><br>
 <br style="clear: left;" />
 </div>
@@ -153,9 +153,9 @@
     log("disable_media");
     var stream;
     if (pc == pc1)
-      stream = localvideo1.mozSrcObject;
+      stream = localvideo1.srcObject;
     else if (pc == pc2)
-      stream = localvideo2.mozSrcObject;
+      stream = localvideo2.srcObject;
     else log("bad pc " + pc);
 
     if (stream) {
@@ -514,11 +514,13 @@
 
     pc1.ontrack = function(obj) {
       log("pc1 got remote tracks from pc2 " + obj.type);
-      pc1video.mozSrcObject = obj.streams[0];
+      pc1video.srcObject = obj.streams[0];
+      pc1video.play();
     }
     pc2.ontrack = function(obj) {
       log("pc2 got remote tracks from pc1 " + obj.type);
-      pc2video.mozSrcObject = obj.streams[0];
+      pc2video.srcObject = obj.streams[0];
+      pc2video.play();
     }
 
     if (idp) {
@@ -530,11 +532,11 @@
 
     navigator.mediaDevices.getUserMedia(myrequest).then(function(video1) {
       // Add stream obtained from gUM to <video> to start media flow.
-      localvideo1.mozSrcObject = video1;
+      localvideo1.srcObject = video1;
       if (video_disable.checked)
-        localvideo1.mozSrcObject.getVideoTracks()[0].enabled = false;
+        localvideo1.srcObject.getVideoTracks()[0].enabled = false;
       if (audio_disable.checked)
-        localvideo1.mozSrcObject.getAudioTracks()[0].enabled = false;
+        localvideo1.srcObject.getAudioTracks()[0].enabled = false;
       localvideo1.play();
       pc1.addStream(video1);
       return Promise.resolve();
@@ -542,7 +544,7 @@
     .then(() => {
       if (!oneway.checked) {
         return navigator.mediaDevices.getUserMedia(myrequest_reverse).then(function(video2) {
-          localvideo2.mozSrcObject = video2;
+          localvideo2.srcObject = video2;
           localvideo2.play();
           pc2.addStream(video2);
           return Promise.resolve();
