@@ -270,7 +270,7 @@
 
     pc2.onaddstream = function(obj) {
       log("pc2 got remote stream from pc1 " + obj.type);
-      pc2video.mozSrcObject = obj.stream;
+      pc2video.srcObject = obj.stream;
     }
 
     var myrequest = { video: true };
@@ -279,7 +279,7 @@
       real_stream = stream1;
       var local_stream = stream1;
 
-      localvideo1.mozSrcObject = real_stream;
+      localvideo1.srcObject = real_stream;
 
       if (canvas1.captureStream) {
         seriously.go(function () {
@@ -307,9 +307,9 @@
     $('#mycanvas1').hide();
     $('#buttons').hide();
     localvideo1.pause();
-    localvideo1.mozSrcObject = null;
+    localvideo1.srcObject = null;
     pc2video.pause();
-    pc2video.mozSrcObject = null;
+    pc2video.srcObject = null;
     real_stream.getTracks().forEach(function(track) {
       track.stop();
     });
