@@ -16,20 +16,20 @@
         <p>Following are a few pages to test various aspects of Mozilla's implementation of WebRTC.</p>
     </div>
   </div>
-    
+
   <div class="row">
-  <div id="gum" class="span12 offset2 alert alert-error fade in" style="display: none;">
+  <div id="gum" class="span12 offset2 alert alert-error" style="display: none;">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
-    <h4>mozGetUserMedia is missing!</h4>
-    Do you have the latest <a href="http://nightly.mozilla.org/">Nightly</a> and set <i>media.navigator.enabled</i> to true?
+    <h4>getUserMedia is missing!</h4>
+    This page only works when loaded loaded <a href="https://mozilla.github.io/webrtc-landing/">via HTTPS</a> as getUserMedia() can only be accessed via HTTPS.
   </div>
   </div>
-  
+
   <div class="row">
   <div id="pc" class="span12 offset2 alert alert-error" style="display: none;">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
-    <h4>mozRTCPeerConnection is missing!</h4>
-    Do you have the latest <a href="http://nightly.mozilla.org/">Nightly</a> and set <i>media.peerconnection.enabled</i> to true?
+    <h4>RTCPeerConnection is missing!</h4>
+    This page only works when loaded loaded <a href="https://mozilla.github.io/webrtc-landing/">via HTTPS</a> as RTCPeerConnectio() is only available via HTTPS.
   </div>
   </div>
 
@@ -37,9 +37,11 @@
   <div id="pc" class="span12 offset2 alert" style="display: none;">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
     <h4>Your Firefox is old.</h4>
-    You have an older version of Firefox that supports WebRTC but may have an incompatible API. For best results, please download the latest <a href="http://nightly.mozilla.org/">Nightly</a>!
+    You have an older version of Firefox that supports WebRTC but may have an
+    incompatible API. For best results, please download the latest <a
+    href="https://nightly.mozilla.org/">Nightly</a>!
   </div>
-  
+
   <div class="row offset2">
       <div class="span3">
       <div class="well">
@@ -50,7 +52,7 @@
         <p><a class="btn btn-small" href="gum_test_aec.html">AEC-in-gUM test</a></p>
       </div>
       </div>
-    
+
       <div class="span3">
       <div class="well">
         <h3>Single host 'chat'</h3>
@@ -58,7 +60,7 @@
         <p><a class="btn btn-large" href="pc_test.html">Try Demo</a></p>
       </div>
       </div>
-    
+
       <div class="span3">
       <div class="well">
         <h3>Single host DataChannels</h3>
@@ -116,10 +118,10 @@
 -->
 
   <script>
-    if (!navigator.mozGetUserMedia) {
+    if (!navigator.mediaDevices.getUserMedia) {
       document.getElementById("gum").style.display = "block";
     }
-    if (!window.mozRTCPeerConnection) {
+    if (!window.RTCPeerConnection) {
       document.getElementById("pc").style.display = "block";
     }
     if (BrowserDetect.browser != "Firefox" ||
