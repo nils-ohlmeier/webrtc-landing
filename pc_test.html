@@ -37,6 +37,13 @@
 
 <h1>Simple RTCPeerConnection Video Test</h1>
 
+<div id="pc_warn" class="hidden">
+  <font color="red">
+  <h4>RTCPeerConnection is missing!</h4>
+  This page only works when loaded loaded <a href="https://mozilla.github.io/webrtc-landing/pc_test.html">via HTTPS</a> as RTCPeerConnectio() is only available via HTTPS.<br><br>
+  </font>
+</div>
+
 <div>
 <button id="tehbutton" onclick="start();">Start!</button>
 <input type="checkbox" id="fake" value="Use Fake Video/Audio for one stream">
@@ -47,7 +54,7 @@
 <label for="audio_only">Audio-only call</label>
 <input type="checkbox" id="video_only" value="Video-only call">
 <label for="video_only">Video-only call</label>
-<br>    
+<br>
 <input type="checkbox" id="disable_video" value="Disable video" onclick="disable_media(pc1, 1, 0);">
 <label for="disable_video">Disable video</label>
 <input type="checkbox" id="disable_audio" value="Disable audio" onclick="disable_media(pc1, 0, 0);">
@@ -96,6 +103,10 @@
 
 
 <script type="application/javascript">
+  if (!window.RTCPeerConnection) {
+    document.getElementById("pc_warn").style.display = "block";
+  }
+
   // Lame clone function. Not efficient but we don't have jQuery.
   function copy_dictionary (obj) {
     return JSON.parse(JSON.stringify(obj));
