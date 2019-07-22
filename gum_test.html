@@ -49,7 +49,7 @@
     <h2><b>getUserMedia Test Page</b></h2>
     <p><a href="https://mozilla.github.io/webrtc-landing">Main webrtc demo page</a></p>
 
-    <div id="gum_warn" class="hidden">
+    <div id="gum_warn" style="display: none">
       <font color="red">
       <h4>getUserMedia is missing!</h4>
       This page only works when loaded loaded <a href="https://mozilla.github.io/webrtc-landing/gum_test.html">via HTTPS</a> as getUserMedia() can only be accessed via HTTPS.<br><br>
@@ -82,7 +82,7 @@
 
   <script type="application/javascript">
   if (!navigator.mediaDevices.getUserMedia) {
-    document.getElementById("gum_warn").style.display = "block";
+    document.getElementById("gum_warn").style.display = "none";
   }
 
   var video_status = false;
